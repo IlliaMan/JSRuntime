@@ -25,15 +25,15 @@ impl Scanner {
             }
 
             let c = self.source[self.position];
-            let token_type = TokenType::from(c);
+            let token_type: TokenType = TokenType::from(c);
             match token_type {
                 TokenType::Unsupported(_) => {
-                    if ('0'..'9').contains(&c) || '.' == c {
+                    if ('0'..='9').contains(&c) || '.' == c {
                         tokens.push(self.consume_number());
                         continue;
                     }
 
-                    if ('a'..'z').contains(&c) || ('A'..'Z').contains(&c) || c == '_' {
+                    if ('a'..='z').contains(&c) || ('A'..='Z').contains(&c) || c == '_' {
                         tokens.push(self.consume_identifier());
                         continue;
                     }
@@ -113,6 +113,26 @@ mod tests {
     fn get_token_types(source: &str) -> Vec<TokenType> {
         let mut scanner = Scanner::new(source.into());
         scanner.tokenize().into_iter().map(|t| t.kind).collect()
+    }
+
+    #[test]
+    fn test_general_cases() {
+        assert_eq!(
+            get_token_types("1 + 5 * (1 + 9);"),
+            vec![
+                TokenType::Number(1.0 as f64),
+                TokenType::Plus,
+                TokenType::Number(5.0 as f64),
+                TokenType::Star,
+                TokenType::LeftParen,
+                TokenType::Number(1.0 as f64),
+                TokenType::Plus,
+                TokenType::Number(9.0 as f64),
+                TokenType::RightParen,
+                TokenType::Semicolon,
+                TokenType::Eof
+            ]
+        );
     }
 
     #[test]
