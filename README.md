@@ -9,3 +9,28 @@ This project implements a JS runtime that supports a subset of JS.
 ```bash
 cargo run -- <path_to_js_file>
 ```
+
+## Language Grammar
+
+Here, it is the currently implemented grammar. It will be updated accordingly to added gradually features.
+
+Nonterminals are UPPER Case, while Terminals are lower case and enum TokenType members. PROGRAM is the start symbol.
+
+
+```bash
+# Productions (Simplified Grammar - Left-to-Right Evaluation)
+
+PROGRAM -> (EXPRESSION TokenType::Semicolon)* TokenType::Eof
+
+EXPRESSION -> FACTOR (OPERATOR FACTOR)*
+
+FACTOR -> LITERAL | UNARY | GROUPING
+
+LITERAL -> TokenType::Number
+
+GROUPING -> TokenType::LeftParen EXPRESSION Token::RightParen
+
+UNARY -> TokenType::Minus FACTOR 
+
+OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash
+```
