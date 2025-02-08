@@ -18,9 +18,15 @@ Nonterminals are UPPER Case, while Terminals are lower case and enum TokenType m
 
 
 ```bash
-# Productions (Simplified Grammar - Left-to-Right Evaluation)
+# Productions (Simplified Grammar)
 
-PROGRAM -> (EXPRESSION TokenType::Semicolon)* TokenType::Eof
+PROGRAM -> STATEMENT* TokenType::Eof
+
+STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
+
+DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst) IDENTIFIER (TokenType::Equals EXPRESSION)? TokenType::Semicolon
+
+EXPRESSION_STATEMENT -> EXPRESSION TokenTyp::Semicolon
 
 EXPRESSION -> FACTOR (OPERATOR FACTOR)*
 
@@ -33,4 +39,6 @@ GROUPING -> TokenType::LeftParen EXPRESSION Token::RightParen
 UNARY -> TokenType::Minus FACTOR 
 
 OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash
+
+IDENTIFIER -> TokenType::Identifier
 ```
