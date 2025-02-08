@@ -1,4 +1,5 @@
 pub mod scanner;
-mod token;
+pub mod token;
 
 pub use scanner::Scanner;
+pub use token::Token;

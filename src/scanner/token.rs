@@ -21,7 +21,7 @@ impl fmt::Debug for Token {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     LeftParen, // (
     RightParen, // )
