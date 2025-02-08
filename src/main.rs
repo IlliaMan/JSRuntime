@@ -183,6 +183,72 @@ mod scanner {
             }
         }
     }
+
+        #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        fn get_token_types(source: &str) -> Vec<TokenType> {
+            let mut scanner = Scanner::new(source.into());
+            scanner.tokenize().into_iter().map(|t| t.kind).collect()
+        }
+
+        #[test]
+        fn test_single_char_tokens() {
+            assert_eq!(
+                get_token_types("( ) + - * / = ;"),
+                vec![
+                    TokenType::LeftParen,
+                    TokenType::RightParen,
+                    TokenType::Plus,
+                    TokenType::Minus,
+                    TokenType::Star,
+                    TokenType::Slash,
+                    TokenType::Equals,
+                    TokenType::Semicolon,
+                    TokenType::Eof
+                ]
+            );
+        }
+
+        #[test]
+        fn test_number_literals() {
+            assert_eq!(
+                get_token_types("123 12.3 0 0.0 .123 123."),
+                vec![
+                    TokenType::Number(123 as f64),
+                    TokenType::Number(12.3 as f64),
+                    TokenType::Number(0 as f64),
+                    TokenType::Number(0.0 as f64),
+                    TokenType::Number(0.123 as f64),
+                    TokenType::Number(123 as f64),
+                    TokenType::Eof
+                ]
+            );
+        }
+
+        #[test]
+        fn test_identifiers_and_keywords() {
+            assert_eq!(
+                get_token_types("let const hello _hello x0"),
+                vec![
+                    TokenType::KeywordLet,
+                    TokenType::KeywordConst,
+                    TokenType::Identifier("hello".into()),
+                    TokenType::Identifier("_hello".into()),
+                    TokenType::Identifier("x0".into()),
+                    TokenType::Eof,
+                ]
+            );
+        }
+
+        #[test]
+        fn test_edge_cases() {
+            assert_eq!(get_token_types(""), vec![TokenType::Eof]);
+
+            assert_eq!(get_token_types("   \t\n\r"), vec![TokenType::Eof]);
+        }
+    }
 }
 
 fn main() -> io::Result<()> {
