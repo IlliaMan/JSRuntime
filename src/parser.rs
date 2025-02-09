@@ -67,7 +67,7 @@ impl Parser {
 
       Ok(Statement::Declaration { 
         is_const,
-        name,
+        name: Box::new(name),
         value: Box::new(value),
       })
     }
@@ -107,6 +107,7 @@ impl Parser {
             TokenType::Number(_) => self.literal(),
             TokenType::LeftParen => self.grouping(),
             TokenType::Minus => self.unary(),
+            TokenType::Identifier(_) => self.identifier(),
             _ => Err(format!("line {}: Expected factor (number, '(', unary -) but got {:?}", token.line, token.kind))
         }
     }
@@ -151,10 +152,10 @@ impl Parser {
     }
 
     // IDENTIFIER -> TokenType::Identifier
-    fn identifier(&mut self) -> Result<Identifier, String> {
+    fn identifier(&mut self) -> Result<Expression, String> {
       let token = self.consume_token();
       match token.kind {
-        TokenType::Identifier(ref name) => Ok(Identifier(String::from(name))),
+        TokenType::Identifier(ref name) => Ok(Expression::Identifier(String::from(name))),
         _ => Err(format!("line {}: identifier expected instead of {:?}", token.line, token.kind)),
       }
     }
@@ -210,7 +211,8 @@ pub enum Statement {
   },
   Declaration {
     is_const: bool,
-    name: Identifier,
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    name: Box<Expression>,
     value: Box<Option<Expression>>,
   }
 }
@@ -218,6 +220,7 @@ pub enum Statement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Number(f64),
+    Identifier(String),
     Grouping {
         expression: Box<Expression>,
     },
@@ -350,7 +353,7 @@ mod tests {
             result.unwrap(),
             vec![Statement::Declaration {
                 is_const: false,
-                name: Identifier("x".into()),
+                name: Box::new(Expression::Identifier("x".into())),
                 value: Box::new(Some(Expression::Number(5.0)))
             }]
         );
@@ -372,7 +375,7 @@ mod tests {
             result.unwrap(),
             vec![Statement::Declaration {
                 is_const: true,
-                name: Identifier("x".into()),
+                name: Box::new(Expression::Identifier("x".into())),
                 value: Box::new(None)
             }]
         );

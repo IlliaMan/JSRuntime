@@ -48,16 +48,21 @@ impl Runtime {
             None => RuntimeValue::Undefined,
           };
 
-          if self.environment.variables.contains_key(&name.get_value()) {
-            return Err(format!("variable {} already declared", name.get_value()));
+          let name = match &*name {
+            Expression::Identifier(name) => String::from(name),
+            _ => panic!("parser bug: name can only Expression::Identifier, got {:?}", name),
+          };
+
+          if self.environment.variables.contains_key(&name) {
+            return Err(format!("variable {} already declared", name));
           }
 
           if is_const {
-            self.environment.constants.insert(name.get_value());
+            self.environment.constants.insert(name.clone());
           }
 
-          self.environment.variables.insert(name.get_value(), value);
-          println!("runtime>: created {:?} = {:?}", name.get_value(), value);
+          println!("runtime>: created {:?} = {:?}", name, value);
+          self.environment.variables.insert(name, value);
         },
         Statement::ExpressionStatement { expression} => {
           let value = self.evalutate_expression(&expression)?;
@@ -72,6 +77,12 @@ impl Runtime {
     fn evalutate_expression(&self, expression: &Expression) -> Result<RuntimeValue, String> {
       match expression {
         Expression::Number(value) => Ok(RuntimeValue::Number(*value)),
+        Expression::Identifier(value) => {
+          match self.environment.variables.get(value) {
+            Some(value) => Ok(value.clone()),
+            None => Ok(RuntimeValue::Undefined),
+          }
+        }
         Expression::Grouping { expression } => self.evalutate_expression(&**expression),
         Expression::Unary { operator, right } => {
           let right_value = self.evalutate_expression(right.as_ref())?;
