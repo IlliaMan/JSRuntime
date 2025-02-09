@@ -402,4 +402,101 @@ mod tests {
         assert!(result.is_ok());
     }
 
+     #[test]
+    fn test_operator_precedence_multiplication() {
+        let tokens = vec![
+            Token::new(TokenType::Number(1.0), 1),
+            Token::new(TokenType::Plus, 1),
+            Token::new(TokenType::Number(2.0), 1),
+            Token::new(TokenType::Star, 1),
+            Token::new(TokenType::Number(3.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Binary {
+                    left: Box::new(Expression::Number(1.0)),
+                    operator: TokenType::Plus,
+                    right: Box::new(
+                        Expression::Binary { 
+                            left: Box::new(Expression::Number(2.0)),
+                            operator: TokenType::Star,
+                            right: Box::new(Expression::Number(3.0))
+                        }
+                    )
+                })
+            }
+        ]);
+    }
+
+    #[test]
+    fn test_operator_precedence_division() {
+        let tokens = vec![
+            Token::new(TokenType::Number(1.0), 1),
+            Token::new(TokenType::Minus, 1),
+            Token::new(TokenType::Number(10.0), 1),
+            Token::new(TokenType::Slash, 1),
+            Token::new(TokenType::Number(2.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Binary {
+                    left: Box::new(Expression::Number(1.0)),
+                    operator: TokenType::Minus,
+                    right: Box::new(
+                        Expression::Binary { 
+                            left: Box::new(Expression::Number(10.0)),
+                            operator: TokenType::Slash,
+                        right: Box::new(Expression::Number(2.0))
+                        }
+                    )
+                })
+            }
+        ]);
+    }
+
+    #[test]
+    fn test_operator_precedence_parentheses() {
+        let tokens = vec![
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::Number(1.0), 1),
+            Token::new(TokenType::Plus, 1),
+            Token::new(TokenType::Number(2.0), 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Star, 1),
+            Token::new(TokenType::Number(3.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Binary {
+                    left: Box::new(Expression::Grouping {
+                        expression: Box::new(Expression::Binary { 
+                            left: Box::new(Expression::Number(1.0)),
+                            operator: TokenType::Plus,
+                            right: Box::new(Expression::Number(2.0))
+                        })},
+                    ),
+                    operator: TokenType::Star,
+                    right: Box::new(Expression::Number(3.0))
+                })
+            }
+        ]);
+    }
 }
