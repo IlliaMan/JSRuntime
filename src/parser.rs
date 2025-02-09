@@ -1,4 +1,4 @@
-use crate::scanner::{token::TokenType, Token};
+use crate::scanner::{token::{self, TokenType}, Token};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -79,11 +79,31 @@ impl Parser {
       Ok(Statement::ExpressionStatement { expression: Box::new(expr) })
     }
     
-    // EXPRESSION -> FACTOR (OPERATOR FACTOR)*
+    // EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
     fn expression(&mut self) -> Result<Expression, String> {
+        let mut expr = self.term()?;
+
+        while matches!(self.peek().kind, TokenType::Plus | TokenType::Minus) {
+            let operator_token = self.consume_token();
+            // workaround: cannot borrow `*self` as mutable more than once
+            let operator_token: Token = Token::new(operator_token.kind.clone(), operator_token.line);
+
+            let right_operand = self.term()?;
+            expr = Expression::Binary { 
+                left: Box::new(expr),
+                operator: operator_token.kind,
+                right: Box::new(right_operand),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    // TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
+    fn term(&mut self) -> Result<Expression, String> {
         let mut expr = self.factor()?;
 
-        while self.is_binary_operator() {
+        while matches!(self.peek().kind, TokenType::Star | TokenType::Slash) {
             let operator_token = self.consume_token();
             // workaround: cannot borrow `*self` as mutable more than once
             let operator_token = Token::new(operator_token.kind.clone(), operator_token.line);
