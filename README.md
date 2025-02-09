@@ -3,6 +3,7 @@
 This project implements a JS runtime that supports a subset of JS.
 
 - **Subset of JavaScript:** Supports a limited set of JS features.
+- **Semicolon:** It must be at the end of every statement.
 - **Single File Execution:** Only supports one JavaScript file at a time—no support for modules.
 
 ## Usage
@@ -12,7 +13,7 @@ cargo run -- <path_to_js_file>
 
 ## Language Grammar
 
-Here, it is the currently implemented grammar. It will be updated accordingly to added gradually features.
+Here, it is the currently implemented grammar. It will be updated accordingly to gradually added features.
 
 Nonterminals are UPPER Case, while Terminals are lower case and enum TokenType members. PROGRAM is the start symbol.
 
