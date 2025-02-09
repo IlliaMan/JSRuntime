@@ -43,14 +43,3 @@ OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Sl
 
 IDENTIFIER -> TokenType::Identifier
 ```
-
-# TODO 
-
--- Calculator
-1. Runtime
-2. Allowing Identifiers to be treated as rhs values
-
-
-3. Adding console.log for numbers
-4. Adding Primitives: number, string, undefined, null, boolean
-5. Adding functions
