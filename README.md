@@ -31,7 +31,7 @@ EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
 
 EXPRESSION -> FACTOR (OPERATOR FACTOR)*
 
-FACTOR -> LITERAL | UNARY | GROUPING
+FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING
 
 LITERAL -> TokenType::Number
 
@@ -43,3 +43,14 @@ OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Sl
 
 IDENTIFIER -> TokenType::Identifier
 ```
+
+# TODO 
+
+-- Calculator
+1. Runtime
+2. Allowing Identifiers to be treated as rhs values
+
+
+3. Adding console.log for numbers
+4. Adding Primitives: number, string, undefined, null, boolean
+5. Adding functions
