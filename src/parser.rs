@@ -244,7 +244,14 @@ mod tests {
         let result = parser.parse();
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec![Expression::Number(5.0)])
+        assert_eq!(
+          result.unwrap(),
+          vec![
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Number(5.0))
+            }
+          ]
+        );
     }
 
     #[test]
@@ -272,10 +279,12 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(
             result.unwrap(),
-            vec![Expression::Binary {
-                left: Box::new(Expression::Number(1.0)),
-                operator: TokenType::Slash,
-                right: Box::new(Expression::Number(8.0)),
+            vec![Statement::ExpressionStatement {
+                expression: Box::new(Expression::Binary {
+                    left: Box::new(Expression::Number(1.0)),
+                    operator: TokenType::Slash,
+                    right: Box::new(Expression::Number(8.0)),
+                }) 
             }]
         );
     }
@@ -290,6 +299,7 @@ mod tests {
             Token::new(TokenType::RightParen, 1),
             Token::new(TokenType::Star, 1),
             Token::new(TokenType::Number(3.0), 1),
+            Token::new(TokenType::Semicolon, 1),
             Token::new(TokenType::Eof, 1),
         ];
         let mut parser = Parser::new(tokens);
@@ -298,17 +308,21 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(
             result.unwrap(),
-            vec![Expression::Binary { 
-                left: Box::new(Expression::Grouping {
-                    expression: Box::new(Expression::Binary {
-                        left: Box::new(Expression::Number(1.0)),
-                        operator: TokenType::Plus,
-                        right: Box::new(Expression::Number(8.0)),
+            vec![
+              Statement::ExpressionStatement {
+                expression: Box::new(Expression::Binary { 
+                    left: Box::new(Expression::Grouping {
+                        expression: Box::new(Expression::Binary {
+                            left: Box::new(Expression::Number(1.0)),
+                            operator: TokenType::Plus,
+                            right: Box::new(Expression::Number(8.0)),
+                        }),
                     }),
-                }),
-                operator: TokenType::Star,
-                right: Box::new(Expression::Number(3.0))
-            }]
+                    operator: TokenType::Star,
+                    right: Box::new(Expression::Number(3.0))
+                })
+              }
+            ]
         );
     }
 }
