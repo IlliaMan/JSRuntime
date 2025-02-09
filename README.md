@@ -26,7 +26,7 @@ STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
 
 DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst) IDENTIFIER (TokenType::Equals EXPRESSION)? TokenType::Semicolon
 
-EXPRESSION_STATEMENT -> EXPRESSION TokenTyp::Semicolon
+EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
 
 EXPRESSION -> FACTOR (OPERATOR FACTOR)*
 
@@ -34,7 +34,7 @@ FACTOR -> LITERAL | UNARY | GROUPING
 
 LITERAL -> TokenType::Number
 
-GROUPING -> TokenType::LeftParen EXPRESSION Token::RightParen
+GROUPING -> TokenType::LeftParen EXPRESSION TokenType::RightParen
 
 UNARY -> TokenType::Minus FACTOR 
 
