@@ -29,7 +29,9 @@ DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst) IDENTIFIER (Tok
 
 EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
 
-EXPRESSION -> FACTOR (OPERATOR FACTOR)*
+EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
+
+TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
 
 FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING
 
