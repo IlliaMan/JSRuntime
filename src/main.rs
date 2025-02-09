@@ -1,9 +1,11 @@
 mod scanner;
 mod parser;
+mod runtime;
 
 use std::{env::{self, Args}, fs, io, path::Path};
 use scanner::Scanner;
 use parser::Parser;
+use runtime::Runtime;
 
 fn get_js_content(mut args: Args) -> io::Result<String> {
     let path: String = args.nth(1).expect("<path> is not provided");
@@ -27,7 +29,11 @@ fn main() -> io::Result<()> {
 
     let mut parser = Parser::new(tokens);
     match parser.parse() {
-        Ok(ast) => println!("AST: {:#?}", ast),
+        Ok(ast) => {
+            println!("AST: {:#?}", ast);
+            let mut runtime = Runtime::new();
+            let _ = runtime.interpret(ast);
+        },
         Err(e) => eprintln!("Parse error: {}", e),
     };
 

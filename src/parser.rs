@@ -197,6 +197,12 @@ impl Parser {
 #[derive(Debug, PartialEq)]
 pub struct Identifier(String);
 
+impl Identifier {
+    pub fn get_value(&self) -> String {
+        String::from(&self.0)
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Statement {
   ExpressionStatement {
