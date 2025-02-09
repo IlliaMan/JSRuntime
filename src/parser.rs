@@ -14,30 +14,69 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Expression>, String> {
+    pub fn parse(&mut self) -> Result<Vec<Statement>, String> {
         self.program()
     }
 
-    // PROGRAM -> (EXPRESSION TokenType::Semicolon)* TokenType::Eof
-    fn program(&mut self) -> Result<Vec<Expression>, String> {
-        let mut expressions = Vec::new();
+    // PROGRAM -> STATEMENT* TokenType::Eof
+    fn program(&mut self) -> Result<Vec<Statement>, String> {
+        let mut statements = vec![];
 
         while !self.is_end() && self.peek().kind != TokenType::Eof {
-            let expr = self.expression()?;
-            expressions.push(expr);
-
-            if self.peek().kind == TokenType::Semicolon {
-                self.consume_token();
-            } else if self.peek().kind != TokenType::Eof {
-                self.consume_token_type(TokenType::Semicolon, "expected ';' after expression")?;
-            }
+            statements.push(self.statement()?);
         }
 
         if self.is_end() {
             self.consume_token_type(TokenType::Eof, "expected end of file")?;
         }
-        
-        Ok(expressions)
+
+        Ok(statements)
+    }
+
+    // STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
+    fn statement(&mut self) -> Result<Statement, String> {
+        let token = self.peek();
+
+        match token.kind {
+            TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
+            _ => self.expression_statement(),
+        }
+    }
+
+    fn declaration(&mut self) -> Result<Statement, String> {
+      let token = self.consume_token();
+      let is_const = match token.kind {
+        TokenType::KeywordLet => false,
+        TokenType::KeywordConst => true,
+        _ => return Err(format!("line {}: declaration expects let or const instead of {:?}", token.line, token.kind)),
+      };
+
+      let name = self.identifier()?;
+      let mut value = None;
+
+      let token = self.consume_token();
+      match token.kind {
+        TokenType::Equals => {
+          value = Some(self.expression()?);
+
+          self.consume_token_type(TokenType::Semicolon, "expected ';' after declaration")?;
+        },
+        TokenType::Semicolon => (),
+        _ => return Err(format!("line {}: declaration expects '=' or ';' instead of {:?}", token.line, token.kind)),
+      };
+
+      Ok(Statement::Declaration { 
+        is_const,
+        name,
+        value: Box::new(value),
+      })
+    }
+
+    // EXPRESSION_STATEMENT -> EXPRESSION TokenTyp::Semicolon
+    fn expression_statement(&mut self) -> Result<Statement, String> {
+      let expr = self.expression()?;
+      self.consume_token_type(TokenType::Semicolon, "expected ';' after expression statement")?;
+      Ok(Statement::ExpressionStatement { expression: Box::new(expr) })
     }
     
     // EXPRESSION -> FACTOR (OPERATOR FACTOR)*
@@ -111,6 +150,15 @@ impl Parser {
         }
     }
 
+    // IDENTIFIER -> TokenType::Identifier
+    fn identifier(&mut self) -> Result<Identifier, String> {
+      let token = self.consume_token();
+      match token.kind {
+        TokenType::Identifier(ref name) => Ok(Identifier(String::from(name))),
+        _ => Err(format!("line {}: identifier expected instead of {:?}", token.line, token.kind)),
+      }
+    }
+
     fn consume_token_type(&mut self, token_type: TokenType, error_message: &str) -> Result<&Token, String> {
         if self.is_end() || self.peek().kind != token_type {
             return Err(String::from(error_message));
@@ -144,6 +192,21 @@ impl Parser {
     fn is_end(&self) -> bool {
        self.position >= self.tokens.len()
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Identifier(String);
+
+#[derive(Debug, PartialEq)]
+pub enum Statement {
+  ExpressionStatement {
+    expression: Box<Expression>,
+  },
+  Declaration {
+    is_const: bool,
+    name: Identifier,
+    value: Box<Option<Expression>>,
+  }
 }
 
 #[derive(Debug, PartialEq)]
