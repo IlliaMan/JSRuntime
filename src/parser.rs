@@ -378,4 +378,25 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_identifiers_as_right_hand_side_values() {
+        let tokens = vec![
+          Token::new(TokenType::KeywordConst, 1),
+          Token::new(TokenType::Identifier("x".into()), 1),
+          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Number(5.0), 1),
+          Token::new(TokenType::Semicolon, 1),
+          Token::new(TokenType::KeywordLet, 1),
+          Token::new(TokenType::Identifier("y".into()), 1),
+          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Identifier("x".into()), 1),
+          Token::new(TokenType::Semicolon, 1),
+          Token::new(TokenType::Eof, 1),
+        ];
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+    }
+
 }
