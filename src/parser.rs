@@ -124,7 +124,7 @@ impl Parser {
         let token = self.peek();
 
         match token.kind {
-            TokenType::Number(_) => self.literal(),
+            TokenType::Number(_) | TokenType::String(_) | TokenType::Boolean(_) | TokenType::Null | TokenType::Undefined => self.literal(),
             TokenType::LeftParen => self.grouping(),
             TokenType::Minus => self.unary(),
             TokenType::Identifier(_) => self.identifier(),
@@ -136,8 +136,12 @@ impl Parser {
     fn literal(&mut self) -> Result<Expression, String> {
         let token = self.consume_token();
 
-        match token.kind {
-            TokenType::Number(value) => Ok(Expression::Number(value)),
+        match &token.kind {
+            TokenType::Number(value) => Ok(Expression::Number(*value)),
+            TokenType::String(value) => Ok(Expression::String(String::from(value))),
+            TokenType::Boolean(value) => Ok(Expression::Boolean(*value)),
+            TokenType::Null => Ok(Expression::Null),
+            TokenType::Undefined => Ok(Expression::Undefined),
             _ => Err(format!("line {}: Expected number literal but got {:?}", token.line, token.kind)),
         }
     }
