@@ -238,6 +238,11 @@ pub enum Expression {
     Grouping {
         expression: Box<Expression>,
     },
+    Comparison {
+        left: Box<Expression>,
+        operator: TokenType,
+        right: Box<Expression>,
+    },
     Unary {
         operator: TokenType,
         right: Box<Expression>,
