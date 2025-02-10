@@ -256,6 +256,23 @@ mod tests {
     }
 
     #[test]
+    fn test_literals() {
+        assert_eq!(
+            get_token_types(r#"123 false 'hello' true null undefined "hello""#),
+            vec![
+                TokenType::Number(123 as f64),
+                TokenType::Boolean(false),
+                TokenType::String("hello".into()),
+                TokenType::Boolean(true),
+                TokenType::Null,
+                TokenType::Undefined,
+                TokenType::String("hello".into()),
+                TokenType::Eof
+            ]
+        );
+    }
+
+    #[test]
     fn test_identifiers_and_keywords() {
         assert_eq!(
             get_token_types("let const hello _hello x0"),
