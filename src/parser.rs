@@ -226,6 +226,10 @@ pub enum Statement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Number(f64),
+    String(String),
+    Boolean(bool),
+    Null,
+    Undefined,
     Identifier(String),
     Grouping {
         expression: Box<Expression>,
