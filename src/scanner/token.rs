@@ -58,6 +58,22 @@ pub enum TokenType {
     Eof,
 }
 
+impl TokenType {
+    pub fn is_comparison_operator(&self) -> bool {
+        matches!(
+            self,
+            TokenType::Equal
+                | TokenType::NotEqual
+                | TokenType::StrictEqual
+                | TokenType::StrictNotEqual
+                | TokenType::GreaterThan
+                | TokenType::GreaterThanOrEqual
+                | TokenType::LessThan
+                | TokenType::LessThanOrEqual
+        )
+    }
+}
+
 impl From<char> for TokenType {
     fn from(value: char) -> Self {
         match value {

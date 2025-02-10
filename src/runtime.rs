@@ -111,6 +111,7 @@ impl Runtime {
             _ => Err(format!("unhandled binary expression: {:?} {:?} {:?}", left_value, operator, right_value)),
           }
         },
+        Expression::Comparison { left, operator, right } => todo!(),
       }
     }
 }

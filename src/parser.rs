@@ -57,7 +57,7 @@ impl Parser {
       let token = self.consume_token();
       match token.kind {
         TokenType::Assign => {
-          value = Some(self.expression()?);
+          value = Some(self.comparison()?);
 
           self.consume_token_type(TokenType::Semicolon, "expected ';' after declaration")?;
         },
@@ -74,9 +74,29 @@ impl Parser {
 
     // EXPRESSION_STATEMENT -> EXPRESSION TokenTyp::Semicolon
     fn expression_statement(&mut self) -> Result<Statement, String> {
-      let expr = self.expression()?;
+      let expr = self.comparison()?;
       self.consume_token_type(TokenType::Semicolon, "expected ';' after expression statement")?;
       Ok(Statement::ExpressionStatement { expression: Box::new(expr) })
+    }
+    
+    // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
+    fn comparison(&mut self) -> Result<Expression, String> {
+        let mut expr = self.expression()?;
+
+        while self.peek().kind.is_comparison_operator() {
+            let operator_token = self.consume_token();
+            // workaround: cannot borrow `*self` as mutable more than once
+            let operator_token: Token = Token::new(operator_token.kind.clone(), operator_token.line);
+
+            let right_operand = self.expression()?;
+            expr = Expression::Comparison { 
+                left: Box::new(expr),
+                operator: operator_token.kind,
+                right: Box::new(right_operand),
+            };
+        }
+
+        Ok(expr)
     }
     
     // EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
