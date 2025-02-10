@@ -265,6 +265,24 @@ mod tests {
     }
 
     #[test]
+    fn test_comparison_operators() {
+        assert_eq!(
+            get_token_types("== != === !== > < >= <="),
+            vec![
+                TokenType::Equal,
+                TokenType::NotEqual,
+                TokenType::StrictEqual,
+                TokenType::StrictNotEqual,
+                TokenType::GreaterThan,
+                TokenType::LessThan,
+                TokenType::GreaterThanOrEqual,
+                TokenType::LessThanOrEqual,
+                TokenType::Eof
+            ]
+        );
+    }
+
+    #[test]
     fn test_number_literals() {
         assert_eq!(
             get_token_types("123 12.3 0 0.0 .123 123."),
