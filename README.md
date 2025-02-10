@@ -62,7 +62,7 @@ let b = null;
 const a = "HELLO";
 let c = undefined;
 
-// Comparisons
+// Comparison operations
 let isEqual = x == y;
 let isNullOrUndefined = b == c;
 let stringComparison = z == a;
