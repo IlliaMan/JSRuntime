@@ -28,7 +28,6 @@ This project implements a JS runtime that supports a subset of JS.
 - **Constraints**
   - Variable reassignment is not supported
   - Semicolon must be added at the end of statements
-  - Comments are not supported
 
 ## Usage
 
@@ -39,10 +38,12 @@ cargo run -- <path_to_js_file>
 ## Supported JS Subset Example
 
 ```js
+// Variable declarations
 const ANSWER = 42;
 let result = (10 + 5) * 2;
 
-let calculation = 50 - -ANSWER / 2;
+// Arithmetic operations
+let calculation /* block comment */ = 50 - -ANSWER / 2;
 let group_test = (3 + 5) * (7 - 2);
 ```
 
@@ -86,7 +87,6 @@ IDENTIFIER -> TokenType::Identifier
 - Function declaration
 - Control flow (if/else statements)
 - Automatic semicolon insertion (ASI)
-- Comments
 - Variable reassignment
 - Async support
 - ES6 module support
