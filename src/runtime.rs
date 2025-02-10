@@ -115,7 +115,99 @@ impl Runtime {
           let left_value = self.evalutate_expression(left.as_ref())?;
           let right_value = self.evalutate_expression(right.as_ref())?;
 
-          match (left_value.clone(), operator, right_value.clone()) {
+          // TODO: comparing every type vs every time is not efficient and too much boilerplate
+          match (left_value.clone(), right_value.clone()) {
+            (RuntimeValue::Number(a), RuntimeValue::Number(b)) => {
+              match operator {
+                TokenType::Equal => Ok(RuntimeValue::Boolean(a == b)),
+                TokenType::NotEqual => Ok(RuntimeValue::Boolean(a != b)),
+                TokenType::StrictEqual => Ok(RuntimeValue::Boolean(a == b)),
+                TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(a != b)),
+                TokenType::GreaterThan => Ok(RuntimeValue::Boolean(a > b)),
+                TokenType::GreaterThanOrEqual => Ok(RuntimeValue::Boolean(a >= b)),
+                TokenType::LessThan => Ok(RuntimeValue::Boolean(a < b)),
+                TokenType::LessThanOrEqual => Ok(RuntimeValue::Boolean(a <= b)),
+                _ => Err(format!("{:?} {:?} {:?} comparison expression is not supported", left_value, operator, right_value)),
+              }
+            },
+            (RuntimeValue::Boolean(a), RuntimeValue::Boolean(b)) => {
+              match operator {
+                TokenType::Equal => Ok(RuntimeValue::Boolean(a == b)),
+                TokenType::NotEqual => Ok(RuntimeValue::Boolean(a != b)),
+                TokenType::StrictEqual => Ok(RuntimeValue::Boolean(a == b)),
+                TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(a != b)),
+                TokenType::GreaterThan => Ok(RuntimeValue::Boolean(a > b)),
+                TokenType::GreaterThanOrEqual => Ok(RuntimeValue::Boolean(a >= b)),
+                TokenType::LessThan => Ok(RuntimeValue::Boolean(a < b)),
+                TokenType::LessThanOrEqual => Ok(RuntimeValue::Boolean(a <= b)),
+                _ => Err(format!("{:?} {:?} {:?} comparison expression is not supported", left_value, operator, right_value)),
+              }
+            },
+            (RuntimeValue::String(a), RuntimeValue::String(b)) => {
+              match operator {
+                TokenType::Equal => Ok(RuntimeValue::Boolean(a == b)),
+                TokenType::NotEqual => Ok(RuntimeValue::Boolean(a != b)),
+                TokenType::StrictEqual => Ok(RuntimeValue::Boolean(a == b)),
+                TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(a != b)),
+                TokenType::GreaterThan => Ok(RuntimeValue::Boolean(a > b)),
+                TokenType::GreaterThanOrEqual => Ok(RuntimeValue::Boolean(a >= b)),
+                TokenType::LessThan => Ok(RuntimeValue::Boolean(a < b)),
+                TokenType::LessThanOrEqual => Ok(RuntimeValue::Boolean(a <= b)),
+                _ => Err(format!("{:?} {:?} {:?} comparison expression is not supported", left_value, operator, right_value)),
+              }
+            },
+            (RuntimeValue::Null, RuntimeValue::Null) => {
+              match operator {
+                TokenType::Equal => Ok(RuntimeValue::Boolean(true)),
+                TokenType::NotEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::StrictEqual => Ok(RuntimeValue::Boolean(true)),
+                TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::GreaterThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::GreaterThanOrEqual => Ok(RuntimeValue::Boolean(true)),
+                TokenType::LessThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::LessThanOrEqual => Ok(RuntimeValue::Boolean(true)),
+                _ => Err(format!("{:?} {:?} {:?} comparison expression is not supported", left_value, operator, right_value)),
+              }
+            },
+            (RuntimeValue::Undefined, RuntimeValue::Undefined) => {
+              match operator {
+                TokenType::Equal => Ok(RuntimeValue::Boolean(true)),
+                TokenType::NotEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::StrictEqual => Ok(RuntimeValue::Boolean(true)),
+                TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::GreaterThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::GreaterThanOrEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::LessThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::LessThanOrEqual => Ok(RuntimeValue::Boolean(false)),
+                _ => Err(format!("{:?} {:?} {:?} comparison expression is not supported", left_value, operator, right_value)),
+              }
+            },
+            (RuntimeValue::Null, RuntimeValue::Undefined) => {
+              match operator {
+                TokenType::Equal => Ok(RuntimeValue::Boolean(true)),
+                TokenType::NotEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::StrictEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(true)),
+                TokenType::GreaterThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::GreaterThanOrEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::LessThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::LessThanOrEqual => Ok(RuntimeValue::Boolean(false)),
+                _ => Err(format!("{:?} {:?} {:?} comparison expression is not supported", left_value, operator, right_value)),
+              }
+            },
+            (RuntimeValue::Undefined, RuntimeValue::Null) => {
+              match operator {
+                TokenType::Equal => Ok(RuntimeValue::Boolean(true)),
+                TokenType::NotEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::StrictEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(true)),
+                TokenType::GreaterThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::GreaterThanOrEqual => Ok(RuntimeValue::Boolean(false)),
+                TokenType::LessThan => Ok(RuntimeValue::Boolean(false)),
+                TokenType::LessThanOrEqual => Ok(RuntimeValue::Boolean(false)),
+                _ => Err(format!("{:?} {:?} {:?} comparison expression is not supported", left_value, operator, right_value)),
+              }
+            },
             _ => Err(format!("unhandled comparison expression: {:?} {:?} {:?}", left_value, operator, right_value)),
           }
         }
