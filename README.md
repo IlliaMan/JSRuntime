@@ -116,5 +116,5 @@ IDENTIFIER -> TokenType::Identifier
 - Control flow (if/else statements)
 - Automatic semicolon insertion (ASI)
 - Variable reassignment
-- Async support
+- Async support: asynchronous runtime
 - ES6 module support
