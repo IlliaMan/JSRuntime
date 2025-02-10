@@ -69,7 +69,7 @@ impl Scanner {
     }
 
     fn is_whitespace(&self, position: usize) -> bool {
-        match self.peek() {
+        match self.source[position] {
             '\n' | ' ' | '\t' | '\r' => true,
             _ => false,
         }
