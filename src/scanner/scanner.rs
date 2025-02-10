@@ -283,7 +283,7 @@ mod tests {
     #[test]
     fn test_literals() {
         assert_eq!(
-            get_token_types(r#"123 false 'hello' true null undefined "hello""#),
+            get_token_types(r#"123 false 'hello' true null undefined "hello" `hello`"#),
             vec![
                 TokenType::Number(123 as f64),
                 TokenType::Boolean(false),
@@ -291,6 +291,7 @@ mod tests {
                 TokenType::Boolean(true),
                 TokenType::Null,
                 TokenType::Undefined,
+                TokenType::String("hello".into()),
                 TokenType::String("hello".into()),
                 TokenType::Eof
             ]
