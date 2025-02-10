@@ -31,6 +31,16 @@ pub enum TokenType {
     Slash,
     Assign,
 
+    // Comparison Operators
+    Equal,
+    NotEqual,
+    StrictEqual,
+    StrictNotEqual,
+    GreaterThan,
+    LessThan,
+    GreaterThanOrEqual,
+    LessThanOrEqual,
+
     // Literals
     Number(f64),
     String(String),
