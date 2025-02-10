@@ -33,6 +33,10 @@ pub enum TokenType {
 
     // Literals
     Number(f64),
+    String(String),
+    Boolean(bool),
+    Null,
+    Undefined,
     
     // Binding Keywords
     KeywordLet,
@@ -69,6 +73,10 @@ impl From<&[char]> for TokenType {
         match value.as_str() {
             "let" => Self::KeywordLet,
             "const" => Self::KeywordConst,
+            "true" => Self::Boolean(true),
+            "false" => Self::Boolean(false),
+            "null" => Self::Null,
+            "undefined" => Self::Undefined,
             _ => Self::Identifier(String::from(value))
         }
     }

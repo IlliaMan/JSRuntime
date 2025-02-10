@@ -57,6 +57,11 @@ impl Scanner {
                         tokens.push(self.consume_identifier());
                         continue;
                     }
+
+                    if c == '"' || c == '\'' || c == '`'  {
+                        tokens.push(self.consume_string());
+                        continue;
+                    }
                 },
                 kind => tokens.push(Token::new(kind, self.position /* TODO: should be line */)),
             }
@@ -69,7 +74,7 @@ impl Scanner {
     }
 
     fn is_whitespace(&self, position: usize) -> bool {
-        match self.peek() {
+        match self.source[position] {
             '\n' | ' ' | '\t' | '\r' => true,
             _ => false,
         }
@@ -100,11 +105,31 @@ impl Scanner {
 
         while !self.is_end() && (self.peek().is_ascii_alphanumeric() || self.peek() == '_') {
             identifier.push(self.peek());
-            self.position += 1;
+            self.increment_position();
         }
 
         let token_type = TokenType::from(&identifier.chars().collect::<Vec<char>>()[..]);
 
+        Token::new(token_type, self.position /* TODO: should be line */)
+    }
+
+    fn consume_string(&mut self) -> Token {
+        let mut string = String::new();
+        let quote = self.peek();
+        self.increment_position();
+
+        while !self.is_end() && self.peek() != quote {
+            string.push(self.peek());
+            self.increment_position();
+        }
+
+        if self.is_end() {
+            panic!("string {} has no closing quote {}", string, quote);
+        }
+
+        let token_type = TokenType::String(String::from(string));
+        self.increment_position();
+        
         Token::new(token_type, self.position /* TODO: should be line */)
     }
 
@@ -250,6 +275,24 @@ mod tests {
                 TokenType::Number(0.0 as f64),
                 TokenType::Number(0.123 as f64),
                 TokenType::Number(123 as f64),
+                TokenType::Eof
+            ]
+        );
+    }
+
+    #[test]
+    fn test_literals() {
+        assert_eq!(
+            get_token_types(r#"123 false 'hello' true null undefined "hello" `hello`"#),
+            vec![
+                TokenType::Number(123 as f64),
+                TokenType::Boolean(false),
+                TokenType::String("hello".into()),
+                TokenType::Boolean(true),
+                TokenType::Null,
+                TokenType::Undefined,
+                TokenType::String("hello".into()),
+                TokenType::String("hello".into()),
                 TokenType::Eof
             ]
         );

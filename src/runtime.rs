@@ -19,9 +19,13 @@ impl Environment {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub enum RuntimeValue {
     Number(f64),
+    String(String),
+    Boolean(bool),
+    Null,
     Undefined,
 }
 
@@ -77,6 +81,10 @@ impl Runtime {
     fn evalutate_expression(&self, expression: &Expression) -> Result<RuntimeValue, String> {
       match expression {
         Expression::Number(value) => Ok(RuntimeValue::Number(*value)),
+        Expression::String(value) => Ok(RuntimeValue::String(String::from(value))),
+        Expression::Boolean(value) => Ok(RuntimeValue::Boolean(*value)),
+        Expression::Null => Ok(RuntimeValue::Null),
+        Expression::Undefined => Ok(RuntimeValue::Undefined),
         Expression::Identifier(value) => {
           match self.environment.variables.get(value) {
             Some(value) => Ok(value.clone()),
@@ -95,7 +103,7 @@ impl Runtime {
           let left_value = self.evalutate_expression(left.as_ref())?;
           let right_value = self.evalutate_expression(right.as_ref())?;
 
-          match (left_value, operator, right_value) {
+          match (left_value.clone(), operator, right_value.clone()) {
             (RuntimeValue::Number(a), TokenType::Star, RuntimeValue::Number(b)) => Ok(RuntimeValue::Number(a * b)),
             (RuntimeValue::Number(a), TokenType::Slash, RuntimeValue::Number(b)) => Ok(RuntimeValue::Number(a / b)),
             (RuntimeValue::Number(a), TokenType::Plus, RuntimeValue::Number(b)) => Ok(RuntimeValue::Number(a + b)),

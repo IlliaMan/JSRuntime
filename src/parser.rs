@@ -1,4 +1,4 @@
-use crate::scanner::{token::{self, TokenType}, Token};
+use crate::scanner::{token::TokenType, Token};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -124,7 +124,7 @@ impl Parser {
         let token = self.peek();
 
         match token.kind {
-            TokenType::Number(_) => self.literal(),
+            TokenType::Number(_) | TokenType::String(_) | TokenType::Boolean(_) | TokenType::Null | TokenType::Undefined => self.literal(),
             TokenType::LeftParen => self.grouping(),
             TokenType::Minus => self.unary(),
             TokenType::Identifier(_) => self.identifier(),
@@ -136,8 +136,12 @@ impl Parser {
     fn literal(&mut self) -> Result<Expression, String> {
         let token = self.consume_token();
 
-        match token.kind {
-            TokenType::Number(value) => Ok(Expression::Number(value)),
+        match &token.kind {
+            TokenType::Number(value) => Ok(Expression::Number(*value)),
+            TokenType::String(value) => Ok(Expression::String(String::from(value))),
+            TokenType::Boolean(value) => Ok(Expression::Boolean(*value)),
+            TokenType::Null => Ok(Expression::Null),
+            TokenType::Undefined => Ok(Expression::Undefined),
             _ => Err(format!("line {}: Expected number literal but got {:?}", token.line, token.kind)),
         }
     }
@@ -163,14 +167,6 @@ impl Parser {
         }
     }
     
-    // OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash
-    fn is_binary_operator(&self) -> bool {
-        match (*self.peek()).kind {
-            TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash => true,
-            _ => false,
-        }
-    }
-
     // IDENTIFIER -> TokenType::Identifier
     fn identifier(&mut self) -> Result<Expression, String> {
       let token = self.consume_token();
@@ -218,12 +214,6 @@ impl Parser {
 #[derive(Debug, PartialEq)]
 pub struct Identifier(String);
 
-impl Identifier {
-    pub fn get_value(&self) -> String {
-        String::from(&self.0)
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub enum Statement {
   ExpressionStatement {
@@ -240,6 +230,10 @@ pub enum Statement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Number(f64),
+    String(String),
+    Boolean(bool),
+    Null,
+    Undefined,
     Identifier(String),
     Grouping {
         expression: Box<Expression>,
@@ -262,9 +256,19 @@ mod tests {
     use crate::scanner::Token;
 
     #[test]
-    fn parse_single_number() {
+    fn parse_literals() {
         let tokens = vec![
             Token::new(TokenType::Number(5.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Boolean(true), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Boolean(false), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::String("hello".into()), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Null, 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Undefined, 1),
             Token::new(TokenType::Semicolon, 1),
             Token::new(TokenType::Eof, 1),
         ];
@@ -278,7 +282,22 @@ mod tests {
           vec![
             Statement::ExpressionStatement {
               expression: Box::new(Expression::Number(5.0))
-            }
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Boolean(true))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Boolean(false))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::String("hello".into()))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Null)
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Undefined)
+            },
           ]
         );
     }
