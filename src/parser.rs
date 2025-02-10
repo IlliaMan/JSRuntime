@@ -252,9 +252,23 @@ mod tests {
     use crate::scanner::Token;
 
     #[test]
-    fn parse_single_number() {
+    fn parse_literals() {
         let tokens = vec![
             Token::new(TokenType::Number(5.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Boolean(false), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Boolean(true), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::String(r#""hello""#.into()), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::String("'hello'".into()), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::String("`hello`".into()), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Null, 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Undefined, 1),
             Token::new(TokenType::Semicolon, 1),
             Token::new(TokenType::Eof, 1),
         ];
@@ -268,7 +282,28 @@ mod tests {
           vec![
             Statement::ExpressionStatement {
               expression: Box::new(Expression::Number(5.0))
-            }
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Boolean(true))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Boolean(false))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::String("hello".into()))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::String("hello".into()))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::String("hello".into()))
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Null)
+            },
+            Statement::ExpressionStatement {
+              expression: Box::new(Expression::Undefined)
+            },
           ]
         );
     }
