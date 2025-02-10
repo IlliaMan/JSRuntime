@@ -265,6 +265,66 @@ mod tests {
     }
 
     #[test]
+    fn test_line_comment() {
+        assert_eq!(
+            get_token_types("// Line comment \nlet x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_block_comment() {
+        assert_eq!(
+            get_token_types("let /* block comment */ x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_nested_block_comment() {
+        assert_eq!(
+            get_token_types("let /* block /* nested */ comment */ x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_multi_line_nested_block_comment() {
+        assert_eq!(
+            get_token_types("let /* block \n * \n * /* nested */ \n * \n * comment */ x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
     fn test_edge_cases() {
         assert_eq!(get_token_types(""), vec![TokenType::Eof]);
 
