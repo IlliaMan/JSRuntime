@@ -1,4 +1,4 @@
-use crate::scanner::{token::{self, TokenType}, Token};
+use crate::scanner::{token::TokenType, Token};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -163,14 +163,6 @@ impl Parser {
         }
     }
     
-    // OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash
-    fn is_binary_operator(&self) -> bool {
-        match (*self.peek()).kind {
-            TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash => true,
-            _ => false,
-        }
-    }
-
     // IDENTIFIER -> TokenType::Identifier
     fn identifier(&mut self) -> Result<Expression, String> {
       let token = self.consume_token();
@@ -217,12 +209,6 @@ impl Parser {
 
 #[derive(Debug, PartialEq)]
 pub struct Identifier(String);
-
-impl Identifier {
-    pub fn get_value(&self) -> String {
-        String::from(&self.0)
-    }
-}
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
