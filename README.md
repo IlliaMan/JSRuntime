@@ -68,7 +68,7 @@ TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
 
 FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING
 
-LITERAL -> TokenType::Number
+LITERAL -> TokenType::Number | TokenType::String | TokeType::Boolean | TokenType::Null | TokenType::Undefined
 
 GROUPING -> TokenType::LeftParen EXPRESSION TokenType::RightParen
 
