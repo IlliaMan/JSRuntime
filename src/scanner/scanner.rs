@@ -5,6 +5,11 @@ pub struct Scanner {
     position: usize,
 }
 
+enum CommentType {
+    Line,
+    Block,
+}
+
 impl Scanner {
     pub fn new(source: String) -> Self {
         println!("--- Source Provided ---\n{}", source);
@@ -24,7 +29,22 @@ impl Scanner {
                 continue;
             }
 
-            let c = self.source[self.position];
+            if let Some(comment_type) = self.is_comment() {
+                match comment_type {
+                    CommentType::Line => {
+                        self.skip_line_comment();
+                        continue;
+                    },
+                    CommentType::Block => {
+                        if let Err(error_message) = self.skip_block_comment() {
+                            panic!("{}", error_message);
+                        }
+                        continue;
+                    },
+                }
+            }
+
+            let c = self.peek();
             let token_type: TokenType = TokenType::from(c);
             match token_type {
                 TokenType::Unsupported(_) => {
@@ -49,7 +69,7 @@ impl Scanner {
     }
 
     fn is_whitespace(&self, position: usize) -> bool {
-        match self.source[position] {
+        match self.peek() {
             '\n' | ' ' | '\t' | '\r' => true,
             _ => false,
         }
@@ -62,12 +82,24 @@ impl Scanner {
     fn increment_position(&mut self) {
         self.position += 1;
     }
+    
+    fn peek(&self) -> char {
+        self.source[self.position]
+    }
+
+    fn peek_next(&self) -> Option<char> {
+        if self.source.len() <= self.position + 1 {
+            return None;
+        }
+
+        Some(self.source[self.position + 1])
+    }
 
     fn consume_identifier(&mut self) -> Token {
         let mut identifier = String::new();
 
-        while !self.is_end() && (self.source[self.position].is_ascii_alphanumeric() || self.source[self.position] == '_') {
-            identifier.push(self.source[self.position]);
+        while !self.is_end() && (self.peek().is_ascii_alphanumeric() || self.peek() == '_') {
+            identifier.push(self.peek());
             self.position += 1;
         }
 
@@ -80,13 +112,13 @@ impl Scanner {
         let start = self.position;
         self.position += 1;
 
-        while self.source[self.position].is_ascii_digit() {
+        while self.peek().is_ascii_digit() {
             self.position += 1;
         }
 
-        if self.source[self.position] == '.' {
+        if self.peek() == '.' {
             self.position += 1;
-            while !self.is_end() && self.source[self.position].is_ascii_digit() {
+            while !self.is_end() && self.peek().is_ascii_digit() {
                 self.position += 1;
             }
         }
@@ -103,6 +135,60 @@ impl Scanner {
         }
 
         Token::new(token_type, self.position /* TODO: should be line */)
+    }
+
+    fn is_comment(&self) -> Option<CommentType> {
+        let c = self.peek();
+        let c_next = match self.peek_next() {
+            Some(c) => c,
+            None => return None,
+        };
+        if c == '/' {
+            if c_next == '/' {
+                return Some(CommentType::Line);
+            }
+
+            if c_next == '*' {
+                return Some(CommentType::Block);
+            }
+        }
+
+        None
+    }
+
+    fn skip_line_comment(&mut self) {
+        while !self.is_end() && self.peek() != '\n' {
+            self.increment_position();
+        }
+
+        self.increment_position();
+    }
+
+    fn skip_block_comment(&mut self) -> Result<(), String> {
+        self.position += 2;
+
+        let mut depth = 1;
+        while depth > 0 && !self.is_end() {
+            match (self.peek(), self.peek_next()) {
+                ('/', Some('*')) => {
+                    self.increment_position();
+                    self.increment_position();
+                    depth += 1;
+                },
+                ('*', Some('/')) => {
+                    self.increment_position();
+                    self.increment_position();
+                    depth -= 1;
+                },
+                _ => self.increment_position(),
+            }
+        }
+
+        if depth != 0 {
+            return Err("unterminated block comment".into());
+        }
+
+        Ok(())
     }
 }
 
@@ -179,6 +265,66 @@ mod tests {
                 TokenType::Identifier("hello".into()),
                 TokenType::Identifier("_hello".into()),
                 TokenType::Identifier("x0".into()),
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_line_comment() {
+        assert_eq!(
+            get_token_types("// Line comment \nlet x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_block_comment() {
+        assert_eq!(
+            get_token_types("let /* block comment */ x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_nested_block_comment() {
+        assert_eq!(
+            get_token_types("let /* block /* nested */ comment */ x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_multi_line_nested_block_comment() {
+        assert_eq!(
+            get_token_types("let /* block \n * \n * /* nested */ \n * \n * comment */ x = 10;"),
+            vec![
+                TokenType::KeywordLet,
+                TokenType::Identifier("x".into()),
+                TokenType::Equals,
+                TokenType::Number(10.0),
+                TokenType::Semicolon,
                 TokenType::Eof,
             ]
         );
