@@ -17,7 +17,12 @@ This project implements a JS runtime that supports a subset of JS.
   - `const` with required initializer: `const PI = 3.14;`
 
 - **Basic Type System**
-  - Number type (double-precision floating point)
+  - Primitive types
+    - Number type (double-precision floating point)
+    - String type
+    - Boolean type
+    - Null
+    - Undefined
   - Variable identifiers
   
 - **Execution Model**
@@ -45,6 +50,13 @@ let result = (10 + 5) * 2;
 // Arithmetic operations
 let calculation /* block comment */ = 50 - -ANSWER / 2;
 let group_test = (3 + 5) * (7 - 2);
+
+let x = false;
+let y = true;
+const z = 'hello';
+let b = null;
+const a = "HELLO";
+let c = undefined;
 ```
 
 ## Language Grammar
@@ -81,7 +93,6 @@ IDENTIFIER -> TokenType::Identifier
 
 # Roadmap
 
-- Primitive types: string, boolean, null
 - Reference types: array, object
 - Operators: comparison, string, logical, ternary, type, bitwise, unary
 - Function declaration
