@@ -29,7 +29,7 @@ pub enum TokenType {
     Minus,
     Star,
     Slash,
-    Equals,
+    Assign,
 
     // Literals
     Number(f64),
@@ -57,7 +57,7 @@ impl From<char> for TokenType {
             '-' => Self::Minus,
             '*' => Self::Star,
             '/' => Self::Slash,
-            '=' => Self::Equals,
+            '=' => Self::Assign,
             ';' => Self::Semicolon,
             _ => Self::Unsupported(String::from(value))
         }

@@ -56,7 +56,7 @@ impl Parser {
 
       let token = self.consume_token();
       match token.kind {
-        TokenType::Equals => {
+        TokenType::Assign => {
           value = Some(self.expression()?);
 
           self.consume_token_type(TokenType::Semicolon, "expected ';' after declaration")?;
@@ -379,7 +379,7 @@ mod tests {
         let tokens = vec![
           Token::new(TokenType::KeywordLet, 1),
           Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Assign, 1),
           Token::new(TokenType::Number(5.0), 1),
           Token::new(TokenType::Semicolon, 1),
           Token::new(TokenType::Eof, 1),
@@ -425,12 +425,12 @@ mod tests {
         let tokens = vec![
           Token::new(TokenType::KeywordConst, 1),
           Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Assign, 1),
           Token::new(TokenType::Number(5.0), 1),
           Token::new(TokenType::Semicolon, 1),
           Token::new(TokenType::KeywordLet, 1),
           Token::new(TokenType::Identifier("y".into()), 1),
-          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Assign, 1),
           Token::new(TokenType::Identifier("x".into()), 1),
           Token::new(TokenType::Semicolon, 1),
           Token::new(TokenType::Eof, 1),

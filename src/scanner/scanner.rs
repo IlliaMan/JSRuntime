@@ -257,7 +257,7 @@ mod tests {
                 TokenType::Minus,
                 TokenType::Star,
                 TokenType::Slash,
-                TokenType::Equals,
+                TokenType::Assign,
                 TokenType::Semicolon,
                 TokenType::Eof
             ]
@@ -320,7 +320,7 @@ mod tests {
             vec![
                 TokenType::KeywordLet,
                 TokenType::Identifier("x".into()),
-                TokenType::Equals,
+                TokenType::Assign,
                 TokenType::Number(10.0),
                 TokenType::Semicolon,
                 TokenType::Eof,
@@ -335,7 +335,7 @@ mod tests {
             vec![
                 TokenType::KeywordLet,
                 TokenType::Identifier("x".into()),
-                TokenType::Equals,
+                TokenType::Assign,
                 TokenType::Number(10.0),
                 TokenType::Semicolon,
                 TokenType::Eof,
@@ -350,7 +350,7 @@ mod tests {
             vec![
                 TokenType::KeywordLet,
                 TokenType::Identifier("x".into()),
-                TokenType::Equals,
+                TokenType::Assign,
                 TokenType::Number(10.0),
                 TokenType::Semicolon,
                 TokenType::Eof,
@@ -365,7 +365,7 @@ mod tests {
             vec![
                 TokenType::KeywordLet,
                 TokenType::Identifier("x".into()),
-                TokenType::Equals,
+                TokenType::Assign,
                 TokenType::Number(10.0),
                 TokenType::Semicolon,
                 TokenType::Eof,

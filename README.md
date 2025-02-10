@@ -69,7 +69,7 @@ PROGRAM -> STATEMENT* TokenType::Eof
 STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
 
 DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst)
-               IDENTIFIER (TokenType::Equals EXPRESSION)? 
+               IDENTIFIER (TokenType::Assign EXPRESSION)? 
                TokenType::Semicolon
 
 EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
