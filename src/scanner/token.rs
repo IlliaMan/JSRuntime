@@ -69,6 +69,8 @@ impl From<char> for TokenType {
             '/' => Self::Slash,
             '=' => Self::Assign,
             ';' => Self::Semicolon,
+            '>' => Self::GreaterThan,
+            '<' => Self::LessThan,
             _ => Self::Unsupported(String::from(value))
         }
     }
@@ -87,6 +89,12 @@ impl From<&[char]> for TokenType {
             "false" => Self::Boolean(false),
             "null" => Self::Null,
             "undefined" => Self::Undefined,
+            "==" => Self::Equal,
+            "!=" => Self::NotEqual,
+            "===" => Self::StrictEqual,
+            "!==" => Self::StrictNotEqual,
+            ">=" => Self::GreaterThanOrEqual,
+            "<=" => Self::LessThanOrEqual,
             _ => Self::Identifier(String::from(value))
         }
     }
