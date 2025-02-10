@@ -36,12 +36,12 @@ impl Runtime {
         }
     }
 
-    pub fn interpret(&mut self, statements: Vec<Statement>) -> Result<(), String> {
+    pub fn interpret(&mut self, statements: Vec<Statement>) {
         for statement in statements {
-            self.evaluate_statement(statement)?;
+            if let Err(error_message) = self.evaluate_statement(statement) {
+              println!("runtime>: {}", error_message);
+            }
         }
-
-        Ok(())
     }
 
     fn evaluate_statement(&mut self, statement: Statement) -> Result<(), String> {
@@ -111,7 +111,14 @@ impl Runtime {
             _ => Err(format!("unhandled binary expression: {:?} {:?} {:?}", left_value, operator, right_value)),
           }
         },
-        Expression::Comparison { left, operator, right } => todo!(),
+        Expression::Comparison { left, operator, right } => {
+          let left_value = self.evalutate_expression(left.as_ref())?;
+          let right_value = self.evalutate_expression(right.as_ref())?;
+
+          match (left_value.clone(), operator, right_value.clone()) {
+            _ => Err(format!("unhandled comparison expression: {:?} {:?} {:?}", left_value, operator, right_value)),
+          }
+        }
       }
     }
 }
