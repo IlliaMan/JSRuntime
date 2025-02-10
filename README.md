@@ -69,10 +69,10 @@ PROGRAM -> STATEMENT* TokenType::Eof
 STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
 
 DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst)
-               IDENTIFIER (TokenType::Assign EXPRESSION)? 
+               IDENTIFIER (TokenType::Assign COMPARISON)? 
                TokenType::Semicolon
 
-EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
+EXPRESSION_STATEMENT -> COMPARISON TokenType::Semicolon
 
 COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
 
