@@ -80,6 +80,10 @@ impl Runtime {
     fn evalutate_expression(&self, expression: &Expression) -> Result<RuntimeValue, String> {
       match expression {
         Expression::Number(value) => Ok(RuntimeValue::Number(*value)),
+        Expression::String(value) => Ok(RuntimeValue::String(String::from(value))),
+        Expression::Boolean(value) => Ok(RuntimeValue::Boolean(*value)),
+        Expression::Null => Ok(RuntimeValue::Null),
+        Expression::Undefined => Ok(RuntimeValue::Undefined),
         Expression::Identifier(value) => {
           match self.environment.variables.get(value) {
             Some(value) => Ok(value.clone()),
