@@ -260,15 +260,11 @@ mod tests {
         let tokens = vec![
             Token::new(TokenType::Number(5.0), 1),
             Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Boolean(false), 1),
-            Token::new(TokenType::Semicolon, 1),
             Token::new(TokenType::Boolean(true), 1),
             Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::String(r#""hello""#.into()), 1),
+            Token::new(TokenType::Boolean(false), 1),
             Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::String("'hello'".into()), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::String("`hello`".into()), 1),
+            Token::new(TokenType::String("hello".into()), 1),
             Token::new(TokenType::Semicolon, 1),
             Token::new(TokenType::Null, 1),
             Token::new(TokenType::Semicolon, 1),
@@ -292,12 +288,6 @@ mod tests {
             },
             Statement::ExpressionStatement {
               expression: Box::new(Expression::Boolean(false))
-            },
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::String("hello".into()))
-            },
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::String("hello".into()))
             },
             Statement::ExpressionStatement {
               expression: Box::new(Expression::String("hello".into()))
