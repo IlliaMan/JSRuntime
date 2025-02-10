@@ -44,6 +44,14 @@ impl Scanner {
                 }
             }
 
+            if let Some(token) = self.consume_if_comparison_operator() {
+                tokens.push(token);
+            }
+
+            if self.is_end() {
+                break;
+            }
+            
             let c = self.peek();
             let token_type: TokenType = TokenType::from(c);
             match token_type {
@@ -179,6 +187,69 @@ impl Scanner {
         }
 
         None
+    }
+
+    fn consume_if_comparison_operator(&mut self) -> Option<Token> {
+        let c = self.peek();
+        let c_next = match self.peek_next() {
+            Some(c) => c,
+            None => return None,
+        };
+
+        let token_type = match (c, c_next) {
+            ('>', '=') => {
+                self.increment_position();
+                self.increment_position();
+                Some(TokenType::GreaterThanOrEqual)
+            },
+            ('<', '=') => {
+                self.increment_position();
+                self.increment_position();
+                Some(TokenType::LessThanOrEqual)
+            },
+            ('<', _) => {
+                self.increment_position();
+                Some(TokenType::LessThan)
+            },
+            ('>', _) => {
+                self.increment_position();
+                Some(TokenType::GreaterThan)
+            },
+            ('!', '=') => {
+                self.increment_position();
+                match self.peek_next() {
+                    Some('=') => {
+                        self.increment_position();
+                        self.increment_position();
+                        Some(TokenType::StrictNotEqual)
+                    },
+                    _ => {
+                        self.increment_position();
+                        Some(TokenType::NotEqual)
+                    }, 
+                }
+            },
+            ('=', '=') => {
+                self.increment_position();
+                match self.peek_next() {
+                    Some('=') => {
+                        self.increment_position();
+                        self.increment_position();
+                        Some(TokenType::StrictEqual)
+                    },
+                    _ => {
+                        self.increment_position();
+                        Some(TokenType::Equal)
+                    }, 
+                }
+            },
+            _ => None,
+        };
+
+        match token_type {
+            Some(token_type) => Some(Token::new(token_type, self.position /* TODO: should be line */)),
+            None => None,
+        }
     }
 
     fn skip_line_comment(&mut self) {
