@@ -12,6 +12,10 @@ This project implements a JS runtime that supports a subset of JS.
 - **Unary Operations**
   - Negative numbers: `-5`, `-(-10)`
 
+- **Comparison Operations**
+  - Same-type comparisons for `number`, `string`, `boolean`, `null` and `undefined`
+  - `null` and `undefined` comparisons
+
 - **Variable Declarations**
   - `let` with optional initializer: `let x = 5;`
   - `const` with required initializer: `const PI = 3.14;`
@@ -57,6 +61,12 @@ const z = 'hello';
 let b = null;
 const a = "HELLO";
 let c = undefined;
+
+// Comparison operations
+let isEqual = x == y;
+let isNullOrUndefined = b == c;
+let stringComparison = z == a;
+let numericComparison = ANSWER > 10;
 ```
 
 ## Language Grammar
@@ -69,10 +79,12 @@ PROGRAM -> STATEMENT* TokenType::Eof
 STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
 
 DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst)
-               IDENTIFIER (TokenType::Equals EXPRESSION)? 
+               IDENTIFIER (TokenType::Assign COMPARISON)? 
                TokenType::Semicolon
 
-EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
+EXPRESSION_STATEMENT -> COMPARISON TokenType::Semicolon
+
+COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
 
 EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
 
@@ -88,16 +100,21 @@ UNARY -> TokenType::Minus FACTOR
 
 OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash
 
+COMPARISON_OPERATOR -> TokenType::Equal | TokenType::NotEqual |
+              TokenType::StrictEqual | TokenType::StrictNotEqual |
+              TokenType::GreaterThan | TokenType::GreaterThanOrEqual |
+              TokenType::LessThanorEqual | | TokenType::LessThan
+
 IDENTIFIER -> TokenType::Identifier
 ```
 
 # Roadmap
 
 - Reference types: array, object
-- Operators: comparison, string, logical, ternary, type, bitwise, unary
+- Operators: comparison (full support), string, logical, ternary, type, bitwise, unary
 - Function declaration
 - Control flow (if/else statements)
 - Automatic semicolon insertion (ASI)
 - Variable reassignment
-- Async support
+- Async support: asynchronous runtime
 - ES6 module support

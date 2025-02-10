@@ -56,8 +56,8 @@ impl Parser {
 
       let token = self.consume_token();
       match token.kind {
-        TokenType::Equals => {
-          value = Some(self.expression()?);
+        TokenType::Assign => {
+          value = Some(self.comparison()?);
 
           self.consume_token_type(TokenType::Semicolon, "expected ';' after declaration")?;
         },
@@ -74,9 +74,29 @@ impl Parser {
 
     // EXPRESSION_STATEMENT -> EXPRESSION TokenTyp::Semicolon
     fn expression_statement(&mut self) -> Result<Statement, String> {
-      let expr = self.expression()?;
+      let expr = self.comparison()?;
       self.consume_token_type(TokenType::Semicolon, "expected ';' after expression statement")?;
       Ok(Statement::ExpressionStatement { expression: Box::new(expr) })
+    }
+    
+    // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
+    fn comparison(&mut self) -> Result<Expression, String> {
+        let mut expr = self.expression()?;
+
+        while self.peek().kind.is_comparison_operator() {
+            let operator_token = self.consume_token();
+            // workaround: cannot borrow `*self` as mutable more than once
+            let operator_token: Token = Token::new(operator_token.kind.clone(), operator_token.line);
+
+            let right_operand = self.expression()?;
+            expr = Expression::Comparison { 
+                left: Box::new(expr),
+                operator: operator_token.kind,
+                right: Box::new(right_operand),
+            };
+        }
+
+        Ok(expr)
     }
     
     // EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
@@ -238,6 +258,11 @@ pub enum Expression {
     Grouping {
         expression: Box<Expression>,
     },
+    Comparison {
+        left: Box<Expression>,
+        operator: TokenType,
+        right: Box<Expression>,
+    },
     Unary {
         operator: TokenType,
         right: Box<Expression>,
@@ -379,7 +404,7 @@ mod tests {
         let tokens = vec![
           Token::new(TokenType::KeywordLet, 1),
           Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Assign, 1),
           Token::new(TokenType::Number(5.0), 1),
           Token::new(TokenType::Semicolon, 1),
           Token::new(TokenType::Eof, 1),
@@ -425,12 +450,12 @@ mod tests {
         let tokens = vec![
           Token::new(TokenType::KeywordConst, 1),
           Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Assign, 1),
           Token::new(TokenType::Number(5.0), 1),
           Token::new(TokenType::Semicolon, 1),
           Token::new(TokenType::KeywordLet, 1),
           Token::new(TokenType::Identifier("y".into()), 1),
-          Token::new(TokenType::Equals, 1),
+          Token::new(TokenType::Assign, 1),
           Token::new(TokenType::Identifier("x".into()), 1),
           Token::new(TokenType::Semicolon, 1),
           Token::new(TokenType::Eof, 1),
@@ -534,6 +559,122 @@ mod tests {
                     ),
                     operator: TokenType::Star,
                     right: Box::new(Expression::Number(3.0))
+                })
+            }
+        ]);
+    }
+
+    #[test]
+    fn test_comparison_operators() {
+        let tokens = vec![
+            Token::new(TokenType::Number(1.0), 1),
+            Token::new(TokenType::Equal, 1),
+            Token::new(TokenType::Number(2.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+
+            Token::new(TokenType::String("hello".into()), 1),
+            Token::new(TokenType::NotEqual, 1),
+            Token::new(TokenType::Number(4.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+            
+            Token::new(TokenType::Boolean(false), 1),
+            Token::new(TokenType::StrictEqual, 1),
+            Token::new(TokenType::Boolean(true), 1),
+            Token::new(TokenType::Semicolon, 1),
+            
+            Token::new(TokenType::Boolean(false), 1),
+            Token::new(TokenType::StrictNotEqual, 1),
+            Token::new(TokenType::Number(2.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+
+            Token::new(TokenType::Number(1.0), 1),
+            Token::new(TokenType::GreaterThan, 1),
+            Token::new(TokenType::Number(2.0), 1),
+            Token::new(TokenType::Semicolon, 1),
+            
+            Token::new(TokenType::Null, 1),
+            Token::new(TokenType::LessThan, 1),
+            Token::new(TokenType::Undefined, 1),
+            Token::new(TokenType::Semicolon, 1),
+            
+            Token::new(TokenType::Boolean(false), 1),
+            Token::new(TokenType::GreaterThanOrEqual, 1),
+            Token::new(TokenType::Undefined, 1),
+            Token::new(TokenType::Semicolon, 1),
+            
+            Token::new(TokenType::String("hello".into()), 1),
+            Token::new(TokenType::LessThanOrEqual, 1),
+            Token::new(TokenType::Null, 1),
+            Token::new(TokenType::Semicolon, 1),
+
+            Token::new(TokenType::Eof, 1)
+        ];
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::Number(1.0)),
+                    operator: TokenType::Equal,
+                    right: Box::new(Expression::Number(2.0))
+                })
+            },
+
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::String("hello".into())),
+                    operator: TokenType::NotEqual,
+                    right: Box::new(Expression::Number(4.0))
+                })
+            },
+            
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::Boolean(false)),
+                    operator: TokenType::StrictEqual,
+                    right: Box::new(Expression::Boolean(true))
+                })
+            },
+            
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::Boolean(false)),
+                    operator: TokenType::StrictNotEqual,
+                    right: Box::new(Expression::Number(2.0))
+                })
+            },
+            
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::Number(1.0)),
+                    operator: TokenType::GreaterThan,
+                    right: Box::new(Expression::Number(2.0))
+                })
+            },
+            
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::Null),
+                    operator: TokenType::LessThan,
+                    right: Box::new(Expression::Undefined)
+                })
+            },
+
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::Boolean(false)),
+                    operator: TokenType::GreaterThanOrEqual,
+                    right: Box::new(Expression::Undefined)
+                })
+            },
+            
+            Statement::ExpressionStatement { 
+                expression: Box::new(Expression::Comparison { 
+                    left: Box::new(Expression::String("hello".into())),
+                    operator: TokenType::LessThanOrEqual,
+                    right: Box::new(Expression::Null)
                 })
             }
         ]);

@@ -29,7 +29,17 @@ pub enum TokenType {
     Minus,
     Star,
     Slash,
-    Equals,
+    Assign,
+
+    // Comparison Operators
+    Equal,
+    NotEqual,
+    StrictEqual,
+    StrictNotEqual,
+    GreaterThan,
+    LessThan,
+    GreaterThanOrEqual,
+    LessThanOrEqual,
 
     // Literals
     Number(f64),
@@ -48,6 +58,22 @@ pub enum TokenType {
     Eof,
 }
 
+impl TokenType {
+    pub fn is_comparison_operator(&self) -> bool {
+        matches!(
+            self,
+            TokenType::Equal
+                | TokenType::NotEqual
+                | TokenType::StrictEqual
+                | TokenType::StrictNotEqual
+                | TokenType::GreaterThan
+                | TokenType::GreaterThanOrEqual
+                | TokenType::LessThan
+                | TokenType::LessThanOrEqual
+        )
+    }
+}
+
 impl From<char> for TokenType {
     fn from(value: char) -> Self {
         match value {
@@ -57,8 +83,10 @@ impl From<char> for TokenType {
             '-' => Self::Minus,
             '*' => Self::Star,
             '/' => Self::Slash,
-            '=' => Self::Equals,
+            '=' => Self::Assign,
             ';' => Self::Semicolon,
+            '>' => Self::GreaterThan,
+            '<' => Self::LessThan,
             _ => Self::Unsupported(String::from(value))
         }
     }
@@ -77,6 +105,12 @@ impl From<&[char]> for TokenType {
             "false" => Self::Boolean(false),
             "null" => Self::Null,
             "undefined" => Self::Undefined,
+            "==" => Self::Equal,
+            "!=" => Self::NotEqual,
+            "===" => Self::StrictEqual,
+            "!==" => Self::StrictNotEqual,
+            ">=" => Self::GreaterThanOrEqual,
+            "<=" => Self::LessThanOrEqual,
             _ => Self::Identifier(String::from(value))
         }
     }
