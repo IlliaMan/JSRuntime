@@ -167,18 +167,24 @@ impl Scanner {
     fn skip_block_comment(&mut self) -> Result<(), String> {
         self.position += 2;
 
-        while !self.is_end() {
+        let mut depth = 1;
+        while depth > 0 && !self.is_end() {
             match (self.peek(), self.peek_next()) {
+                ('/', Some('*')) => {
+                    self.increment_position();
+                    self.increment_position();
+                    depth += 1;
+                },
                 ('*', Some('/')) => {
                     self.increment_position();
                     self.increment_position();
-                    return Ok(());
+                    depth -= 1;
                 },
                 _ => self.increment_position(),
             }
         }
 
-        if self.is_end() {
+        if depth != 0 {
             return Err("unterminated block comment".into());
         }
 
