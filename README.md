@@ -74,6 +74,8 @@ DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst)
 
 EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
 
+COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
+
 EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
 
 TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
@@ -87,6 +89,11 @@ GROUPING -> TokenType::LeftParen EXPRESSION TokenType::RightParen
 UNARY -> TokenType::Minus FACTOR 
 
 OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash
+
+COMPARISON_OPERATOR -> TokenType::Equal | TokenType::NotEqual |
+              TokenType::StrictEqual | TokenType::StrictNotEqual |
+              TokenType::GreaterThan | TokenType::GreaterThanOrEqual |
+              TokenType::LessThanorEqual | | TokenType::LessThan
 
 IDENTIFIER -> TokenType::Identifier
 ```
