@@ -468,4 +468,83 @@ mod tests {
 
         assert_eq!(get_token_types("   \t\n\r"), vec![TokenType::Eof]);
     }
+
+    #[test]
+    fn test_functions() {
+        assert_eq!(
+            get_token_types("function hello() {}"),
+            vec![
+                TokenType::Function,
+                TokenType::Identifier("hello".into()),
+                TokenType::LeftParen,
+                TokenType::RightParen,
+                TokenType::LeftSquareParen,
+                TokenType::RightSquareParen,
+                TokenType::Eof,
+            ]
+        );
+
+        assert_eq!(
+            get_token_types("function get(a) {}"),
+            vec![
+                TokenType::Function,
+                TokenType::Identifier("get".into()),
+                TokenType::LeftParen,
+                TokenType::Identifier("a".into()),
+                TokenType::RightParen,
+                TokenType::LeftSquareParen,
+                TokenType::RightSquareParen,
+                TokenType::Eof,
+            ]
+        );
+        
+        assert_eq!(
+            get_token_types("function get(a) {}"),
+            vec![
+                TokenType::Function,
+                TokenType::Identifier("get".into()),
+                TokenType::LeftParen,
+                TokenType::Identifier("a".into()),
+                TokenType::RightParen,
+                TokenType::LeftSquareParen,
+                TokenType::RightSquareParen,
+                TokenType::Eof,
+            ]
+        );
+        
+        assert_eq!(
+            get_token_types("function say(a1, a3,a4) {}"),
+            vec![
+                TokenType::Function,
+                TokenType::Identifier("say".into()),
+                TokenType::LeftParen,
+                TokenType::Identifier("a1".into()),
+                TokenType::Comma,
+                TokenType::Identifier("a3".into()),
+                TokenType::Comma,
+                TokenType::Identifier("a4".into()),
+                TokenType::RightParen,
+                TokenType::LeftSquareParen,
+                TokenType::RightSquareParen,
+                TokenType::Eof,
+            ]
+        );
+        
+        assert_eq!(
+            get_token_types("function make() { x + 1;}"),
+            vec![
+                TokenType::Function,
+                TokenType::Identifier("make".into()),
+                TokenType::LeftParen,
+                TokenType::RightParen,
+                TokenType::LeftSquareParen,
+                TokenType::Identifier("x".into()),
+                TokenType::Plus,
+                TokenType::Number(1.0),
+                TokenType::Semicolon,
+                TokenType::RightSquareParen,
+                TokenType::Eof,
+            ]
+        );
+    }
 }
