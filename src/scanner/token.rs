@@ -25,11 +25,14 @@ impl fmt::Debug for Token {
 pub enum TokenType {
     LeftParen, // (
     RightParen, // )
+    LeftSquareParen, // [
+    RightSquareParen, // ]
     Plus,
     Minus,
     Star,
     Slash,
     Assign,
+    Comma,
 
     // Comparison Operators
     Equal,
@@ -52,6 +55,8 @@ pub enum TokenType {
     KeywordLet,
     KeywordConst,
 
+    Function,
+    Return,
     Identifier(String),
     Unsupported(String),
     Semicolon,
@@ -87,6 +92,9 @@ impl From<char> for TokenType {
             ';' => Self::Semicolon,
             '>' => Self::GreaterThan,
             '<' => Self::LessThan,
+            '{' => Self::RightSquareParen,
+            '}' => Self::LeftSquareParen,
+            ',' => Self::Comma,
             _ => Self::Unsupported(String::from(value))
         }
     }
@@ -105,6 +113,8 @@ impl From<&[char]> for TokenType {
             "false" => Self::Boolean(false),
             "null" => Self::Null,
             "undefined" => Self::Undefined,
+            "function" => Self::Function,
+            "return" => Self::Return,
             "==" => Self::Equal,
             "!=" => Self::NotEqual,
             "===" => Self::StrictEqual,
