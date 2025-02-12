@@ -244,6 +244,13 @@ pub enum Statement {
     // TODO: Need a way to have sort of Expression::Identifier as type here
     name: Box<Expression>,
     value: Box<Option<Expression>>,
+  },
+  FunctionDeclaration {
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    name: Box<Expression>,
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    params: Box<Vec<Expression>>,
+    body: Box<Vec<Expression>>,
   }
 }
 
@@ -272,6 +279,12 @@ pub enum Expression {
         operator: TokenType,
         right: Box<Expression>,
     },
+    Call {
+        // TODO: Need a way to have sort of Expression::Identifier as type here
+        callee: Box<Expression>,
+        // TODO: Need a way to have sort of Expression::Identifier as type here
+        args: Box<Vec<Expression>
+    }
 }
 
 #[cfg(test)]
