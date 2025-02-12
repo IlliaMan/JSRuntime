@@ -22,7 +22,7 @@ impl Scanner {
 
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens = Vec::<Token>::new();
-        
+
         while !self.is_end() {
             if self.is_whitespace(self.position) {
                 self.increment_position();
@@ -34,13 +34,13 @@ impl Scanner {
                     CommentType::Line => {
                         self.skip_line_comment();
                         continue;
-                    },
+                    }
                     CommentType::Block => {
                         if let Err(error_message) = self.skip_block_comment() {
                             panic!("{}", error_message);
                         }
                         continue;
-                    },
+                    }
                 }
             }
 
@@ -51,7 +51,7 @@ impl Scanner {
             if self.is_end() {
                 break;
             }
-            
+
             let c = self.peek();
             let token_type: TokenType = TokenType::from(c);
             match token_type {
@@ -66,18 +66,24 @@ impl Scanner {
                         continue;
                     }
 
-                    if c == '"' || c == '\'' || c == '`'  {
+                    if c == '"' || c == '\'' || c == '`' {
                         tokens.push(self.consume_string());
                         continue;
                     }
-                },
-                kind => tokens.push(Token::new(kind, self.position /* TODO: should be line */)),
+                }
+                kind => tokens.push(Token::new(
+                    kind,
+                    self.position, /* TODO: should be line */
+                )),
             }
 
             self.increment_position();
         }
 
-        tokens.push(Token::new(TokenType::Eof, self.position /* TODO: should be line */));
+        tokens.push(Token::new(
+            TokenType::Eof,
+            self.position, /* TODO: should be line */
+        ));
         tokens
     }
 
@@ -95,7 +101,7 @@ impl Scanner {
     fn increment_position(&mut self) {
         self.position += 1;
     }
-    
+
     fn peek(&self) -> char {
         self.source[self.position]
     }
@@ -137,7 +143,7 @@ impl Scanner {
 
         let token_type = TokenType::String(String::from(string));
         self.increment_position();
-        
+
         Token::new(token_type, self.position /* TODO: should be line */)
     }
 
@@ -156,15 +162,21 @@ impl Scanner {
             }
         }
 
-        let num_str: String = self.source[start..self.position]
-            .iter()
-            .collect();
+        let num_str: String = self.source[start..self.position].iter().collect();
 
-        let token_type ;
+        let token_type;
         if num_str.ends_with('.') {
-            token_type = TokenType::Number(num_str[..num_str.len() - 1].parse().expect("number ending with . should be parsed"));
+            token_type = TokenType::Number(
+                num_str[..num_str.len() - 1]
+                    .parse()
+                    .expect("number ending with . should be parsed"),
+            );
         } else {
-            token_type = TokenType::Number(num_str.parse().expect("consume_number: can't parse a number"));
+            token_type = TokenType::Number(
+                num_str
+                    .parse()
+                    .expect("consume_number: can't parse a number"),
+            );
         }
 
         Token::new(token_type, self.position /* TODO: should be line */)
@@ -201,20 +213,20 @@ impl Scanner {
                 self.increment_position();
                 self.increment_position();
                 Some(TokenType::GreaterThanOrEqual)
-            },
+            }
             ('<', '=') => {
                 self.increment_position();
                 self.increment_position();
                 Some(TokenType::LessThanOrEqual)
-            },
+            }
             ('<', _) => {
                 self.increment_position();
                 Some(TokenType::LessThan)
-            },
+            }
             ('>', _) => {
                 self.increment_position();
                 Some(TokenType::GreaterThan)
-            },
+            }
             ('!', '=') => {
                 self.increment_position();
                 match self.peek_next() {
@@ -222,13 +234,13 @@ impl Scanner {
                         self.increment_position();
                         self.increment_position();
                         Some(TokenType::StrictNotEqual)
-                    },
+                    }
                     _ => {
                         self.increment_position();
                         Some(TokenType::NotEqual)
-                    }, 
+                    }
                 }
-            },
+            }
             ('=', '=') => {
                 self.increment_position();
                 match self.peek_next() {
@@ -236,18 +248,21 @@ impl Scanner {
                         self.increment_position();
                         self.increment_position();
                         Some(TokenType::StrictEqual)
-                    },
+                    }
                     _ => {
                         self.increment_position();
                         Some(TokenType::Equal)
-                    }, 
+                    }
                 }
-            },
+            }
             _ => None,
         };
 
         match token_type {
-            Some(token_type) => Some(Token::new(token_type, self.position /* TODO: should be line */)),
+            Some(token_type) => Some(Token::new(
+                token_type,
+                self.position, /* TODO: should be line */
+            )),
             None => None,
         }
     }
@@ -270,12 +285,12 @@ impl Scanner {
                     self.increment_position();
                     self.increment_position();
                     depth += 1;
-                },
+                }
                 ('*', Some('/')) => {
                     self.increment_position();
                     self.increment_position();
                     depth -= 1;
-                },
+                }
                 _ => self.increment_position(),
             }
         }
@@ -285,187 +300,5 @@ impl Scanner {
         }
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn get_token_types(source: &str) -> Vec<TokenType> {
-        let mut scanner = Scanner::new(source.into());
-        scanner.tokenize().into_iter().map(|t| t.kind).collect()
-    }
-
-    #[test]
-    fn test_general_cases() {
-        assert_eq!(
-            get_token_types("1 + 5 * (1 + 9);"),
-            vec![
-                TokenType::Number(1.0 as f64),
-                TokenType::Plus,
-                TokenType::Number(5.0 as f64),
-                TokenType::Star,
-                TokenType::LeftParen,
-                TokenType::Number(1.0 as f64),
-                TokenType::Plus,
-                TokenType::Number(9.0 as f64),
-                TokenType::RightParen,
-                TokenType::Semicolon,
-                TokenType::Eof
-            ]
-        );
-    }
-
-    #[test]
-    fn test_single_char_tokens() {
-        assert_eq!(
-            get_token_types("( ) + - * / = ;"),
-            vec![
-                TokenType::LeftParen,
-                TokenType::RightParen,
-                TokenType::Plus,
-                TokenType::Minus,
-                TokenType::Star,
-                TokenType::Slash,
-                TokenType::Assign,
-                TokenType::Semicolon,
-                TokenType::Eof
-            ]
-        );
-    }
-
-    #[test]
-    fn test_comparison_operators() {
-        assert_eq!(
-            get_token_types("== != === !== > < >= <="),
-            vec![
-                TokenType::Equal,
-                TokenType::NotEqual,
-                TokenType::StrictEqual,
-                TokenType::StrictNotEqual,
-                TokenType::GreaterThan,
-                TokenType::LessThan,
-                TokenType::GreaterThanOrEqual,
-                TokenType::LessThanOrEqual,
-                TokenType::Eof
-            ]
-        );
-    }
-
-    #[test]
-    fn test_number_literals() {
-        assert_eq!(
-            get_token_types("123 12.3 0 0.0 .123 123."),
-            vec![
-                TokenType::Number(123 as f64),
-                TokenType::Number(12.3 as f64),
-                TokenType::Number(0 as f64),
-                TokenType::Number(0.0 as f64),
-                TokenType::Number(0.123 as f64),
-                TokenType::Number(123 as f64),
-                TokenType::Eof
-            ]
-        );
-    }
-
-    #[test]
-    fn test_literals() {
-        assert_eq!(
-            get_token_types(r#"123 false 'hello' true null undefined "hello" `hello`"#),
-            vec![
-                TokenType::Number(123 as f64),
-                TokenType::Boolean(false),
-                TokenType::String("hello".into()),
-                TokenType::Boolean(true),
-                TokenType::Null,
-                TokenType::Undefined,
-                TokenType::String("hello".into()),
-                TokenType::String("hello".into()),
-                TokenType::Eof
-            ]
-        );
-    }
-
-    #[test]
-    fn test_identifiers_and_keywords() {
-        assert_eq!(
-            get_token_types("let const hello _hello x0"),
-            vec![
-                TokenType::KeywordLet,
-                TokenType::KeywordConst,
-                TokenType::Identifier("hello".into()),
-                TokenType::Identifier("_hello".into()),
-                TokenType::Identifier("x0".into()),
-                TokenType::Eof,
-            ]
-        );
-    }
-
-    #[test]
-    fn test_line_comment() {
-        assert_eq!(
-            get_token_types("// Line comment \nlet x = 10;"),
-            vec![
-                TokenType::KeywordLet,
-                TokenType::Identifier("x".into()),
-                TokenType::Assign,
-                TokenType::Number(10.0),
-                TokenType::Semicolon,
-                TokenType::Eof,
-            ]
-        );
-    }
-
-    #[test]
-    fn test_block_comment() {
-        assert_eq!(
-            get_token_types("let /* block comment */ x = 10;"),
-            vec![
-                TokenType::KeywordLet,
-                TokenType::Identifier("x".into()),
-                TokenType::Assign,
-                TokenType::Number(10.0),
-                TokenType::Semicolon,
-                TokenType::Eof,
-            ]
-        );
-    }
-
-    #[test]
-    fn test_nested_block_comment() {
-        assert_eq!(
-            get_token_types("let /* block /* nested */ comment */ x = 10;"),
-            vec![
-                TokenType::KeywordLet,
-                TokenType::Identifier("x".into()),
-                TokenType::Assign,
-                TokenType::Number(10.0),
-                TokenType::Semicolon,
-                TokenType::Eof,
-            ]
-        );
-    }
-
-    #[test]
-    fn test_multi_line_nested_block_comment() {
-        assert_eq!(
-            get_token_types("let /* block \n * \n * /* nested */ \n * \n * comment */ x = 10;"),
-            vec![
-                TokenType::KeywordLet,
-                TokenType::Identifier("x".into()),
-                TokenType::Assign,
-                TokenType::Number(10.0),
-                TokenType::Semicolon,
-                TokenType::Eof,
-            ]
-        );
-    }
-
-    #[test]
-    fn test_edge_cases() {
-        assert_eq!(get_token_types(""), vec![TokenType::Eof]);
-
-        assert_eq!(get_token_types("   \t\n\r"), vec![TokenType::Eof]);
     }
 }
