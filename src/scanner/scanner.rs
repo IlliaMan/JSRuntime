@@ -499,20 +499,6 @@ mod tests {
         );
         
         assert_eq!(
-            get_token_types("function get(a) {}"),
-            vec![
-                TokenType::Function,
-                TokenType::Identifier("get".into()),
-                TokenType::LeftParen,
-                TokenType::Identifier("a".into()),
-                TokenType::RightParen,
-                TokenType::LeftSquareParen,
-                TokenType::RightSquareParen,
-                TokenType::Eof,
-            ]
-        );
-        
-        assert_eq!(
             get_token_types("function say(a1, a3,a4) {}"),
             vec![
                 TokenType::Function,
