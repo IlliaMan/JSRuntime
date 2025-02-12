@@ -1040,7 +1040,7 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let result = parser.parse();
 
-        // assert!(result.is_ok());
+        assert!(result.is_ok());
         assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
                 expression: Box::new(Expression::Call {
                     callee: Box::new(Expression::Identifier("hello".into())),
@@ -1052,44 +1052,43 @@ mod tests {
             }
         ]);
         
-        // let tokens = vec![
-        //     Token::new(TokenType::Identifier("hello".into()), 1),
-        //     Token::new(TokenType::LeftParen, 1),
-        //     Token::new(TokenType::Comma, 1),
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
 
-        //     Token::new(TokenType::Identifier("name".into()), 1),
-        //     Token::new(TokenType::LeftParen, 1),
-        //     Token::new(TokenType::RightParen, 1),
-        //     Token::new(TokenType::Comma, 1),
+            Token::new(TokenType::Identifier("name".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Comma, 1),
 
-        //     Token::new(TokenType::Number(1.0), 1),
-        //     Token::new(TokenType::Comma, 1),
+            Token::new(TokenType::Number(1.0), 1),
+            Token::new(TokenType::Comma, 1),
 
-        //     Token::new(TokenType::String("surname".into()), 1),
+            Token::new(TokenType::String("surname".into()), 1),
 
-        //     Token::new(TokenType::RightParen, 1),
-        //     Token::new(TokenType::Semicolon, 1),
-        //     Token::new(TokenType::Eof, 1)
-        // ];
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Eof, 1)
+        ];
 
-        // let mut parser = Parser::new(tokens);
-        // let result = parser.parse();
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
 
-        // // assert!(result.is_ok());
-        // assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
-        //         expression: Box::new(Expression::Call {
-        //             callee: Box::new(Expression::Identifier("hello".into())),
-        //             args: Box::new(vec![
-        //                 Expression::Call {
-        //                     callee: Box::new(Expression::Identifier("name".into())),
-        //                     args: Box::new(vec![]),
-        //                 },
-        //                 Expression::Number(1.0),
-        //                 Expression::String("surname".into())
-        //             ])
-        //         })
-        //     }
-        // ]);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
+                expression: Box::new(Expression::Call {
+                    callee: Box::new(Expression::Identifier("hello".into())),
+                    args: Box::new(vec![
+                        Expression::Call {
+                            callee: Box::new(Expression::Identifier("name".into())),
+                            args: Box::new(vec![]),
+                        },
+                        Expression::Number(1.0),
+                        Expression::String("surname".into())
+                    ])
+                })
+            }
+        ]);
     }
     
     #[test]
