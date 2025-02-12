@@ -128,7 +128,7 @@ COMPARISON_OPERATOR -> TokenType::Equal | TokenType::NotEqual |
               TokenType::GreaterThan | TokenType::GreaterThanOrEqual |
               TokenType::LessThanorEqual | | TokenType::LessThan
 
-CALL -> IDENTIFIER TokenType::ParenLeft ARGUMENTS? TokenType::ParenRight
+CALL -> IDENTIFIER TokenType::LeftParen ARGUMENTS? TokenType::RightParen
 
 ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*
 
