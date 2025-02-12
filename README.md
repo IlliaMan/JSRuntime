@@ -20,6 +20,16 @@ This project implements a JS runtime that supports a subset of JS.
   - `let` with optional initializer: `let x = 5;`
   - `const` with required initializer: `const PI = 3.14;`
 
+- **Functions**
+  - Function declarations: `function name(params) { body }`
+  - Parameter handling:
+    - Missing parameters get `undefined` value
+    - Extra arguments are ignored
+  - Return statements:
+    - Explicit returns with `return value;`
+    - Implicit returns with `undefined` for missing returns
+  - No function hoisting (must be declared before use)
+
 - **Basic Type System**
   - Primitive types
     - Number type (double-precision floating point)
@@ -74,11 +84,15 @@ function add(x, y) {
   return x + y;
 }
 
-function empty_body() {}
+function emptyBody() {}
 
-function simple_return() {
+function simpleReturn() {
   return;
 }
+
+// Function calls
+let addResult = add(result, 7);
+emptyBody();
 ```
 
 ## Language Grammar
@@ -139,7 +153,8 @@ IDENTIFIER -> TokenType::Identifier
 
 - Reference types: array, object
 - Operators: comparison (full support), string, logical, ternary, type, bitwise, unary
-- Function declaration
+- Nested functions, closures
+- Arrow functions
 - Control flow (if/else statements)
 - Automatic semicolon insertion (ASI)
 - Variable reassignment
