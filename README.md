@@ -110,9 +110,10 @@ EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
 
 TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
 
-FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING
+FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING | CALL
 
-LITERAL -> TokenType::Number | TokenType::String | TokeType::Boolean | TokenType::Null | TokenType::Undefined
+LITERAL -> TokenType::Number | TokenType::String | TokeType::Boolean |
+           TokenType::Null | TokenType::Undefined
 
 GROUPING -> TokenType::LeftParen EXPRESSION TokenType::RightParen
 
@@ -124,6 +125,10 @@ COMPARISON_OPERATOR -> TokenType::Equal | TokenType::NotEqual |
               TokenType::StrictEqual | TokenType::StrictNotEqual |
               TokenType::GreaterThan | TokenType::GreaterThanOrEqual |
               TokenType::LessThanorEqual | | TokenType::LessThan
+
+CALL -> IDENTIFIER TokenType::ParenLeft ARGUMENTS? TokenType::ParenRight
+
+ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*
 
 IDENTIFIER -> TokenType::Identifier
 ```
