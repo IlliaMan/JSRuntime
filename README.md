@@ -76,11 +76,19 @@ The currently implemented grammar (will be updated as features are added):
 ```bash
 PROGRAM -> STATEMENT* TokenType::Eof
 
-STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
+STATEMENT -> DECLARATION | EXPRESSION_STATEMENT | FUNCTION_DECLARATION
 
 DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst)
                IDENTIFIER (TokenType::Assign COMPARISON)? 
                TokenType::Semicolon
+
+FUNCTION_DECLARATION ->  TokenType::Function IDENTIFIER TokenType::LeftParen FUNCTION_PARAMS? TokenType::RightParen FUNCTION_BODY
+
+FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)?
+
+FUNCTION_BODY -> TokenType::LeftSquareParen (DECLARATION | EXPRESSION_STATEMENT)* (FUNCTION_RETURN)? TokenType::RightSquareParen
+
+FUNCTION_RETURN -> TokenType::Return (DECLARATION | EXPRESSION_STATEMENT)? TokenType::Semicolon
 
 EXPRESSION_STATEMENT -> COMPARISON TokenType::Semicolon
 
