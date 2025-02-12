@@ -470,7 +470,7 @@ mod tests {
     }
 
     #[test]
-    fn test_functions() {
+    fn test_function_declarations() {
         assert_eq!(
             get_token_types("function hello() {}"),
             vec![
