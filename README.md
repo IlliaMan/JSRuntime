@@ -67,6 +67,18 @@ let isEqual = x == y;
 let isNullOrUndefined = b == c;
 let stringComparison = z == a;
 let numericComparison = ANSWER > 10;
+
+// Function declarations
+function add(x, y) {
+  const text = 'add function';
+  return x + y;
+}
+
+function empty_body() {}
+
+function simple_return() {
+  return;
+}
 ```
 
 ## Language Grammar
