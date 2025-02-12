@@ -92,8 +92,8 @@ impl From<char> for TokenType {
             ';' => Self::Semicolon,
             '>' => Self::GreaterThan,
             '<' => Self::LessThan,
-            '{' => Self::RightSquareParen,
-            '}' => Self::LeftSquareParen,
+            '{' => Self::LeftSquareParen,
+            '}' => Self::RightSquareParen,
             ',' => Self::Comma,
             _ => Self::Unsupported(String::from(value))
         }
