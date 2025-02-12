@@ -39,6 +39,7 @@ impl Parser {
 
         match token.kind {
             TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
+            TokenType::Function => self.function_declaration(),
             _ => self.expression_statement(),
         }
     }
@@ -77,6 +78,84 @@ impl Parser {
       let expr = self.comparison()?;
       self.consume_token_type(TokenType::Semicolon, "expected ';' after expression statement")?;
       Ok(Statement::ExpressionStatement { expression: Box::new(expr) })
+    }
+
+    // FUNCTION_DECLARATION ->  TokenType::Function IDENTIFIER TokenType::LeftParen FUNCTION_PARAMS? TokenType::RightParen FUNCTION_BODY
+    fn function_declaration(&mut self) -> Result<Statement, String> {
+        let _ = self.consume_token();
+        let identifier = self.identifier()?;
+        self.consume_token_type(TokenType::LeftParen, "expected '(' after function name")?;
+        let mut params = vec![];
+        if self.peek().kind != TokenType::RightParen {
+            params = self.function_params()?;
+        }
+        self.consume_token_type(TokenType::RightParen, "expected ')' after function arguments")?;
+        let mut body = self.function_body()?;
+        if body.len() == 0 {
+            body = vec![ Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })}];
+        }
+        
+        Ok(Statement::FunctionDeclaration { 
+            name: Box::new(identifier),
+            params: Box::new(params),
+            body: Box::new(body)
+        })
+    }
+
+    // FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)?
+    fn function_params(&mut self) -> Result<Vec<Expression>, String> {
+        let mut params = vec![];
+        params.push(self.identifier()?);
+        
+        while self.peek().kind == TokenType::Comma {
+            self.consume_token();
+            params.push(self.identifier()?);
+        }
+
+        Ok(params)
+    }
+
+    // FUNCTION_BODY -> TokenType::LeftSquareParen (DECLARATION | EXPRESSION_STATEMENT)* (FUNCTION_RETURN)? TokenType::RightSquareParen
+    fn function_body(&mut self) -> Result<Vec<Statement>, String> {
+        self.consume_token_type(TokenType::LeftSquareParen, "Expected '{' to begin function body.")?;
+
+        let mut statements = vec![];
+        let mut is_return_found = false;
+        while self.peek().kind != TokenType::RightSquareParen {
+            let statement = match self.peek().kind {
+                TokenType::Function => return Err(format!("line {}: Functions inside functions are not yet supported", self.peek().line)),
+                TokenType::Return => {
+                    is_return_found = true;
+                    self.function_return()
+                },
+                TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
+                _ => self.expression_statement(),
+            };
+            statements.push(statement?);
+        }
+
+        self.consume_token_type(TokenType::RightSquareParen, "Expected '}' to end function body.")?;
+
+        if !is_return_found {
+            statements.push(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
+        }
+
+        Ok(statements)
+    }
+
+    // FUNCTION_RETURN -> TokenType::Return COMPARISON? TokenType::Semicolon
+    fn function_return(&mut self) -> Result<Statement, String> {
+        self.consume_token();
+
+        if self.peek().kind == TokenType::Semicolon {
+            self.consume_token();
+            return Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
+        }
+
+        let expr = self.comparison()?;
+        self.consume_token_type(TokenType::Semicolon, "expected ';' after return statement")?;
+
+        Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(expr) }) })
     }
     
     // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
@@ -250,7 +329,7 @@ pub enum Statement {
     name: Box<Expression>,
     // TODO: Need a way to have sort of Expression::Identifier as type here
     params: Box<Vec<Expression>>,
-    body: Box<Vec<Expression>>,
+    body: Box<Vec<Statement>>,
   }
 }
 
@@ -288,6 +367,12 @@ pub enum Expression {
     Return {
         expression: Box<Expression>,
     },
+}
+
+impl Expression {
+    fn is_return_expression(&self) -> bool {
+        matches!(self, Expression::Return { .. })
+    }
 }
 
 #[cfg(test)]
@@ -719,8 +804,10 @@ mod tests {
             Statement::FunctionDeclaration {
                 name: Box::new(Expression::Identifier("hello".into())),
                 params: Box::new(vec![]),
-                body: Box::new(vec![
-                    Expression::Return { expression: Box::new(Expression::Identifier("hello".into())) },
+                body: Box::new(vec![Statement::ExpressionStatement {
+                    expression: Box::new(
+                        Expression::Return { expression: Box::new(Expression::Identifier("hello".into())) },
+                    )}
                 ])
             }
         ]);
@@ -747,7 +834,9 @@ mod tests {
                 name: Box::new(Expression::Identifier("hello".into())),
                 params: Box::new(vec![]),
                 body: Box::new(vec![
-                    Expression::Return { expression: Box::new(Expression::Undefined) },
+                    Statement::ExpressionStatement {
+                        expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })
+                    }
                 ])
             }
         ]);
@@ -776,7 +865,9 @@ mod tests {
                 name: Box::new(Expression::Identifier("hello".into())),
                 params: Box::new(vec![]),
                 body: Box::new(vec![
-                    Expression::Return { expression: Box::new(Expression::Undefined) },
+                    Statement::ExpressionStatement {
+                        expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })
+                    }
                 ])
             }
         ]);
@@ -797,6 +888,7 @@ mod tests {
             Token::new(TokenType::Identifier("x".into()), 1),
             Token::new(TokenType::Plus, 1),
             Token::new(TokenType::Identifier("y".into()), 1),
+            Token::new(TokenType::Semicolon, 1),
             Token::new(TokenType::RightSquareParen, 1),
             Token::new(TokenType::Eof, 1),
         ];
@@ -807,17 +899,19 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), vec![
             Statement::FunctionDeclaration {
-                name: Box::new(Expression::Identifier("hello".into())),
-                params: Box::new(vec![]),
+                name: Box::new(Expression::Identifier("add".into())),
+                params: Box::new(vec![Expression::Identifier("x".into()), Expression::Identifier("y".into())]),
                 body: Box::new(vec![
-                    Expression::Return { expression: Box::new(Expression::Binary { 
-                        left: Box::new(Expression::Identifier("x".into())),
-                        operator: TokenType::Plus,
-                        right: Box::new(Expression::Identifier("y".into()))
-                    })},
-                ])
-            }
-        ]);
+                    Statement::ExpressionStatement {
+                        expression: Box::new(Expression::Return { expression: Box::new(Expression::Binary { 
+                            left: Box::new(Expression::Identifier("x".into())),
+                            operator: TokenType::Plus,
+                            right: Box::new(Expression::Identifier("y".into()))
+                        })})
+                    }])
+                }
+            ]
+        );
     }
 
     #[test]
