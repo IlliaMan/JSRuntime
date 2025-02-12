@@ -369,12 +369,6 @@ pub enum Expression {
     },
 }
 
-impl Expression {
-    fn is_return_expression(&self) -> bool {
-        matches!(self, Expression::Return { .. })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
