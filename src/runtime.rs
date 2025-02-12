@@ -8,6 +8,8 @@ pub struct Runtime {
 pub struct Environment {
     variables: HashMap<String, RuntimeValue>,
     constants: HashSet<String>,
+    // TODO: move out Statement::FunctionDeclaration from enum for less ambiguity
+    functions: HashMap<String, Statement>,
 }
 
 impl Environment {
@@ -15,6 +17,7 @@ impl Environment {
         Self {
             variables: HashMap::new(),
             constants: HashSet::new(),
+            functions: HashMap::new(),
         }
     }
 }
@@ -73,7 +76,15 @@ impl Runtime {
 
           println!("runtime>: {:?}", value);
         },
-        Statement::FunctionDeclaration { name, params, body } => todo!(),
+        Statement::FunctionDeclaration { name, params, body } => {
+          let function_name = match &*name {
+            Expression::Identifier(name) => String::from(name),
+            _ => panic!("parser bug: function name can only Expression::Identifier, got {:?}", name),
+          };
+
+          println!("runtime>: created {:?}({:?})", function_name, params);
+          self.environment.functions.insert(function_name, Statement::FunctionDeclaration { name, params, body });
+        },
       }
 
       Ok(())
