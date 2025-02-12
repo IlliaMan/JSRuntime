@@ -139,9 +139,76 @@ impl Runtime {
             _ => Err(format!("unhandled comparison expression: {:?} {:?} {:?}", left_value, operator, right_value)),
           }
         }
-        Expression::Call { callee, args } => todo!(),
-        Expression::Return { expression } => todo!(),
+        Expression::Call { callee, args } => self.call_function(&*callee, &*args),
+        Expression::Return { expression } => self.evalutate_expression(expression),
       }
+    }
+
+    fn call_function(&self, callee: &Expression, args: &Vec<Expression>) -> Result<RuntimeValue, String> {
+      let function = self.get_function(callee)?;
+      let evaluated_args = self.evaluate_arguments(args)?;
+      
+      let (body, params) = match function {
+        Statement::FunctionDeclaration { body, params, .. } => (body, params),
+        _ => return Err(String::from("expected Statement::FunctionDeclaration as function"))
+      };
+      
+      let mut local_scope = Environment::new();
+      for (key, value) in &self.environment.functions {
+        local_scope.functions.insert(key.clone(), value.clone());
+      }
+      self.bind_params(params, &evaluated_args, &mut local_scope)?;
+      
+      self.execute_function_body(local_scope, body)
+    }
+
+    fn get_function(&self, callee: &Expression) -> Result<&Statement, String> {
+      let callee = match callee {
+        Expression::Identifier(name) => name,
+        _ => return Err(format!("expected Expression::Identifier as callee Expression: {:?}", callee))
+      };
+
+      self.environment.functions
+        .get(callee)
+        .ok_or(format!("function {:?} is not defined (hoisting is not supported)", callee))
+    }
+
+    fn evaluate_arguments(&self, args: &Vec<Expression>) -> Result<Vec<RuntimeValue>, String> {
+      args.iter()
+        .map(|arg| self.evalutate_expression(arg))
+        .collect()
+    }
+
+    fn bind_params(&self, params: &Vec<Expression>, values: &Vec<RuntimeValue>, environment: &mut Environment) -> Result<(), String> {
+      for (i, param) in params.iter().enumerate() {
+        let param_name = match param {
+            Expression::Identifier(param) => String::from(param),
+            _ => return Err(String::from("param must be Identifier")),
+        };
+
+        let value = values.get(i).cloned().unwrap_or(RuntimeValue::Undefined);
+        environment.variables.insert(param_name, value);
+      }
+
+      Ok(())
+    } 
+
+    fn execute_function_body(&self, local_scope: Environment, body: &Vec<Statement>) -> Result<RuntimeValue, String> {
+      let mut runtime = Runtime { environment: local_scope };
+
+      for statement in body.iter() {
+        if let Statement::ExpressionStatement { expression } = statement {
+            if let Expression::Return { expression } = &**expression {
+                return runtime.evalutate_expression(expression);
+            }
+        }
+        
+        if let Err(error) = runtime.evaluate_statement(statement.clone()) {
+          return Err(error);
+        }
+      }
+    
+      Ok(RuntimeValue::Undefined)
     }
 
     fn compare_numbers(&self, a: f64, b: f64, operator: &TokenType) -> Result<RuntimeValue, String> {

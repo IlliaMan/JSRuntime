@@ -364,7 +364,7 @@ impl Parser {
 #[derive(Debug, PartialEq)]
 pub struct Identifier(String);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
   ExpressionStatement {
     expression: Box<Expression>,
@@ -384,7 +384,7 @@ pub enum Statement {
   }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Number(f64),
     String(String),
