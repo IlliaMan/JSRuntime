@@ -1,4 +1,4 @@
-use crate::{parser::{Expression, Statement}, scanner::{token::TokenType, Token}};
+use crate::{parser::{Expression, Statement}, scanner::token::TokenType};
 use std::collections::{HashMap, HashSet};
 
 pub struct Runtime {
@@ -73,6 +73,7 @@ impl Runtime {
 
           println!("runtime>: {:?}", value);
         },
+        Statement::FunctionDeclaration { name, params, body } => todo!(),
       }
 
       Ok(())
@@ -127,6 +128,8 @@ impl Runtime {
             _ => Err(format!("unhandled comparison expression: {:?} {:?} {:?}", left_value, operator, right_value)),
           }
         }
+        Expression::Call { callee, args } => todo!(),
+        Expression::Return { expression } => todo!(),
       }
     }
 
