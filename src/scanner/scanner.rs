@@ -547,4 +547,46 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn test_function_calls() {
+        assert_eq!(
+            get_token_types("hello();"),
+            vec![
+                TokenType::Identifier("hello".into()),
+                TokenType::LeftParen,
+                TokenType::RightParen,
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+        
+        assert_eq!(
+            get_token_types("hello(name, surname);"),
+            vec![
+                TokenType::Identifier("hello".into()),
+                TokenType::LeftParen,
+                TokenType::Identifier("name".into()),
+                TokenType::Comma,
+                TokenType::Identifier("surname".into()),
+                TokenType::RightParen,
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+        
+        assert_eq!(
+            get_token_types("assert(true, 'hello');"),
+            vec![
+                TokenType::Identifier("assert".into()),
+                TokenType::LeftParen,
+                TokenType::Boolean(true),
+                TokenType::Comma,
+                TokenType::String("hello".into()),
+                TokenType::RightParen,
+                TokenType::Semicolon,
+                TokenType::Eof,
+            ]
+        );
+    }
 }
