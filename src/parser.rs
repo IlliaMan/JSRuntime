@@ -10,7 +10,7 @@ impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
         Self {
             tokens,
-            position: 0
+            position: 0,
         }
     }
 
@@ -44,41 +44,56 @@ impl Parser {
     }
 
     fn declaration(&mut self) -> Result<Statement, String> {
-      let token = self.consume_token();
-      let is_const = match token.kind {
-        TokenType::KeywordLet => false,
-        TokenType::KeywordConst => true,
-        _ => return Err(format!("line {}: declaration expects let or const instead of {:?}", token.line, token.kind)),
-      };
+        let token = self.consume_token();
+        let is_const = match token.kind {
+            TokenType::KeywordLet => false,
+            TokenType::KeywordConst => true,
+            _ => {
+                return Err(format!(
+                    "line {}: declaration expects let or const instead of {:?}",
+                    token.line, token.kind
+                ))
+            }
+        };
 
-      let name = self.identifier()?;
-      let mut value = None;
+        let name = self.identifier()?;
+        let mut value = None;
 
-      let token = self.consume_token();
-      match token.kind {
-        TokenType::Assign => {
-          value = Some(self.comparison()?);
+        let token = self.consume_token();
+        match token.kind {
+            TokenType::Assign => {
+                value = Some(self.comparison()?);
 
-          self.consume_token_type(TokenType::Semicolon, "expected ';' after declaration")?;
-        },
-        TokenType::Semicolon => (),
-        _ => return Err(format!("line {}: declaration expects '=' or ';' instead of {:?}", token.line, token.kind)),
-      };
+                self.consume_token_type(TokenType::Semicolon, "expected ';' after declaration")?;
+            }
+            TokenType::Semicolon => (),
+            _ => {
+                return Err(format!(
+                    "line {}: declaration expects '=' or ';' instead of {:?}",
+                    token.line, token.kind
+                ))
+            }
+        };
 
-      Ok(Statement::Declaration { 
-        is_const,
-        name: Box::new(name),
-        value: Box::new(value),
-      })
+        Ok(Statement::Declaration {
+            is_const,
+            name: Box::new(name),
+            value: Box::new(value),
+        })
     }
 
     // EXPRESSION_STATEMENT -> EXPRESSION TokenTyp::Semicolon
     fn expression_statement(&mut self) -> Result<Statement, String> {
-      let expr = self.comparison()?;
-      self.consume_token_type(TokenType::Semicolon, "expected ';' after expression statement")?;
-      Ok(Statement::ExpressionStatement { expression: Box::new(expr) })
+        let expr = self.comparison()?;
+        self.consume_token_type(
+            TokenType::Semicolon,
+            "expected ';' after expression statement",
+        )?;
+        Ok(Statement::ExpressionStatement {
+            expression: Box::new(expr),
+        })
     }
-    
+
     // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
     fn comparison(&mut self) -> Result<Expression, String> {
         let mut expr = self.expression()?;
@@ -86,10 +101,11 @@ impl Parser {
         while self.peek().kind.is_comparison_operator() {
             let operator_token = self.consume_token();
             // workaround: cannot borrow `*self` as mutable more than once
-            let operator_token: Token = Token::new(operator_token.kind.clone(), operator_token.line);
+            let operator_token: Token =
+                Token::new(operator_token.kind.clone(), operator_token.line);
 
             let right_operand = self.expression()?;
-            expr = Expression::Comparison { 
+            expr = Expression::Comparison {
                 left: Box::new(expr),
                 operator: operator_token.kind,
                 right: Box::new(right_operand),
@@ -98,7 +114,7 @@ impl Parser {
 
         Ok(expr)
     }
-    
+
     // EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
     fn expression(&mut self) -> Result<Expression, String> {
         let mut expr = self.term()?;
@@ -106,10 +122,11 @@ impl Parser {
         while matches!(self.peek().kind, TokenType::Plus | TokenType::Minus) {
             let operator_token = self.consume_token();
             // workaround: cannot borrow `*self` as mutable more than once
-            let operator_token: Token = Token::new(operator_token.kind.clone(), operator_token.line);
+            let operator_token: Token =
+                Token::new(operator_token.kind.clone(), operator_token.line);
 
             let right_operand = self.term()?;
-            expr = Expression::Binary { 
+            expr = Expression::Binary {
                 left: Box::new(expr),
                 operator: operator_token.kind,
                 right: Box::new(right_operand),
@@ -129,7 +146,7 @@ impl Parser {
             let operator_token = Token::new(operator_token.kind.clone(), operator_token.line);
 
             let right_operand = self.factor()?;
-            expr = Expression::Binary { 
+            expr = Expression::Binary {
                 left: Box::new(expr),
                 operator: operator_token.kind,
                 right: Box::new(right_operand),
@@ -144,11 +161,18 @@ impl Parser {
         let token = self.peek();
 
         match token.kind {
-            TokenType::Number(_) | TokenType::String(_) | TokenType::Boolean(_) | TokenType::Null | TokenType::Undefined => self.literal(),
+            TokenType::Number(_)
+            | TokenType::String(_)
+            | TokenType::Boolean(_)
+            | TokenType::Null
+            | TokenType::Undefined => self.literal(),
             TokenType::LeftParen => self.grouping(),
             TokenType::Minus => self.unary(),
             TokenType::Identifier(_) => self.identifier(),
-            _ => Err(format!("line {}: Expected factor (number, '(', unary -) but got {:?}", token.line, token.kind))
+            _ => Err(format!(
+                "line {}: Expected factor (number, '(', unary -) but got {:?}",
+                token.line, token.kind
+            )),
         }
     }
 
@@ -162,16 +186,21 @@ impl Parser {
             TokenType::Boolean(value) => Ok(Expression::Boolean(*value)),
             TokenType::Null => Ok(Expression::Null),
             TokenType::Undefined => Ok(Expression::Undefined),
-            _ => Err(format!("line {}: Expected number literal but got {:?}", token.line, token.kind)),
+            _ => Err(format!(
+                "line {}: Expected number literal but got {:?}",
+                token.line, token.kind
+            )),
         }
     }
-    
+
     // GROUPING -> TokenType::LeftParen EXPRESSION Token::RightParen
     fn grouping(&mut self) -> Result<Expression, String> {
         self.consume_token_type(TokenType::LeftParen, "expected '(' to start grouping")?;
         let expr = self.expression()?;
         self.consume_token_type(TokenType::RightParen, "expected ')' to close grouping")?;
-        Ok(Expression::Grouping { expression: Box::new(expr) })
+        Ok(Expression::Grouping {
+            expression: Box::new(expr),
+        })
     }
 
     // UNARY -> TokenType::Minus FACTOR
@@ -182,21 +211,34 @@ impl Parser {
         let factor = self.factor()?;
 
         match operator_token.kind {
-            TokenType::Minus => Ok(Expression::Unary { operator: TokenType::Minus, right: Box::new(factor) }),
-            _ => Err(format!("line {}: Invalid unary operator {:?}", operator_token.line, operator_token.kind)),
+            TokenType::Minus => Ok(Expression::Unary {
+                operator: TokenType::Minus,
+                right: Box::new(factor),
+            }),
+            _ => Err(format!(
+                "line {}: Invalid unary operator {:?}",
+                operator_token.line, operator_token.kind
+            )),
         }
     }
-    
+
     // IDENTIFIER -> TokenType::Identifier
     fn identifier(&mut self) -> Result<Expression, String> {
-      let token = self.consume_token();
-      match token.kind {
-        TokenType::Identifier(ref name) => Ok(Expression::Identifier(String::from(name))),
-        _ => Err(format!("line {}: identifier expected instead of {:?}", token.line, token.kind)),
-      }
+        let token = self.consume_token();
+        match token.kind {
+            TokenType::Identifier(ref name) => Ok(Expression::Identifier(String::from(name))),
+            _ => Err(format!(
+                "line {}: identifier expected instead of {:?}",
+                token.line, token.kind
+            )),
+        }
     }
 
-    fn consume_token_type(&mut self, token_type: TokenType, error_message: &str) -> Result<&Token, String> {
+    fn consume_token_type(
+        &mut self,
+        token_type: TokenType,
+        error_message: &str,
+    ) -> Result<&Token, String> {
         if self.is_end() || self.peek().kind != token_type {
             return Err(String::from(error_message));
         }
@@ -227,7 +269,7 @@ impl Parser {
     }
 
     fn is_end(&self) -> bool {
-       self.position >= self.tokens.len()
+        self.position >= self.tokens.len()
     }
 }
 
@@ -236,15 +278,15 @@ pub struct Identifier(String);
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-  ExpressionStatement {
-    expression: Box<Expression>,
-  },
-  Declaration {
-    is_const: bool,
-    // TODO: Need a way to have sort of Expression::Identifier as type here
-    name: Box<Expression>,
-    value: Box<Option<Expression>>,
-  }
+    ExpressionStatement {
+        expression: Box<Expression>,
+    },
+    Declaration {
+        is_const: bool,
+        // TODO: Need a way to have sort of Expression::Identifier as type here
+        name: Box<Expression>,
+        value: Box<Option<Expression>>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -275,408 +317,4 @@ pub enum Expression {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::scanner::token::TokenType;
-    use crate::scanner::Token;
-
-    #[test]
-    fn parse_literals() {
-        let tokens = vec![
-            Token::new(TokenType::Number(5.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Boolean(true), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Boolean(false), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::String("hello".into()), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Null, 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Undefined, 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Eof, 1),
-        ];
-
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(
-          result.unwrap(),
-          vec![
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::Number(5.0))
-            },
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::Boolean(true))
-            },
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::Boolean(false))
-            },
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::String("hello".into()))
-            },
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::Null)
-            },
-            Statement::ExpressionStatement {
-              expression: Box::new(Expression::Undefined)
-            },
-          ]
-        );
-    }
-
-    #[test]
-    fn parse_empty_program() {
-        let tokens = vec![Token::new(TokenType::Eof, 1)];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec![]);
-    }
-
-    #[test]
-    fn parse_binary_expression() {
-        let tokens = vec![
-            Token::new(TokenType::Number(1.0), 1),
-            Token::new(TokenType::Slash, 1),
-            Token::new(TokenType::Number(8.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap(),
-            vec![Statement::ExpressionStatement {
-                expression: Box::new(Expression::Binary {
-                    left: Box::new(Expression::Number(1.0)),
-                    operator: TokenType::Slash,
-                    right: Box::new(Expression::Number(8.0)),
-                }) 
-            }]
-        );
-    }
-
-    #[test]
-    fn parse_grouping() {
-        let tokens = vec![
-            Token::new(TokenType::LeftParen, 1),
-            Token::new(TokenType::Number(1.0), 1),
-            Token::new(TokenType::Plus, 1),
-            Token::new(TokenType::Number(8.0), 1),
-            Token::new(TokenType::RightParen, 1),
-            Token::new(TokenType::Star, 1),
-            Token::new(TokenType::Number(3.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap(),
-            vec![
-              Statement::ExpressionStatement {
-                expression: Box::new(Expression::Binary { 
-                    left: Box::new(Expression::Grouping {
-                        expression: Box::new(Expression::Binary {
-                            left: Box::new(Expression::Number(1.0)),
-                            operator: TokenType::Plus,
-                            right: Box::new(Expression::Number(8.0)),
-                        }),
-                    }),
-                    operator: TokenType::Star,
-                    right: Box::new(Expression::Number(3.0))
-                })
-              }
-            ]
-        );
-    }
-
-    #[test]
-    fn test_valid_declaration_with_initializer() {
-        let tokens = vec![
-          Token::new(TokenType::KeywordLet, 1),
-          Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Assign, 1),
-          Token::new(TokenType::Number(5.0), 1),
-          Token::new(TokenType::Semicolon, 1),
-          Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap(),
-            vec![Statement::Declaration {
-                is_const: false,
-                name: Box::new(Expression::Identifier("x".into())),
-                value: Box::new(Some(Expression::Number(5.0)))
-            }]
-        );
-    }
-
-    #[test]
-    fn test_valid_declaration_without_initializer() {
-        let tokens = vec![
-          Token::new(TokenType::KeywordConst, 1),
-          Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Semicolon, 1),
-          Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap(),
-            vec![Statement::Declaration {
-                is_const: true,
-                name: Box::new(Expression::Identifier("x".into())),
-                value: Box::new(None)
-            }]
-        );
-    }
-
-    #[test]
-    fn test_identifiers_as_right_hand_side_values() {
-        let tokens = vec![
-          Token::new(TokenType::KeywordConst, 1),
-          Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Assign, 1),
-          Token::new(TokenType::Number(5.0), 1),
-          Token::new(TokenType::Semicolon, 1),
-          Token::new(TokenType::KeywordLet, 1),
-          Token::new(TokenType::Identifier("y".into()), 1),
-          Token::new(TokenType::Assign, 1),
-          Token::new(TokenType::Identifier("x".into()), 1),
-          Token::new(TokenType::Semicolon, 1),
-          Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-    }
-
-     #[test]
-    fn test_operator_precedence_multiplication() {
-        let tokens = vec![
-            Token::new(TokenType::Number(1.0), 1),
-            Token::new(TokenType::Plus, 1),
-            Token::new(TokenType::Number(2.0), 1),
-            Token::new(TokenType::Star, 1),
-            Token::new(TokenType::Number(3.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec![
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Binary {
-                    left: Box::new(Expression::Number(1.0)),
-                    operator: TokenType::Plus,
-                    right: Box::new(
-                        Expression::Binary { 
-                            left: Box::new(Expression::Number(2.0)),
-                            operator: TokenType::Star,
-                            right: Box::new(Expression::Number(3.0))
-                        }
-                    )
-                })
-            }
-        ]);
-    }
-
-    #[test]
-    fn test_operator_precedence_division() {
-        let tokens = vec![
-            Token::new(TokenType::Number(1.0), 1),
-            Token::new(TokenType::Minus, 1),
-            Token::new(TokenType::Number(10.0), 1),
-            Token::new(TokenType::Slash, 1),
-            Token::new(TokenType::Number(2.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec![
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Binary {
-                    left: Box::new(Expression::Number(1.0)),
-                    operator: TokenType::Minus,
-                    right: Box::new(
-                        Expression::Binary { 
-                            left: Box::new(Expression::Number(10.0)),
-                            operator: TokenType::Slash,
-                        right: Box::new(Expression::Number(2.0))
-                        }
-                    )
-                })
-            }
-        ]);
-    }
-
-    #[test]
-    fn test_operator_precedence_parentheses() {
-        let tokens = vec![
-            Token::new(TokenType::LeftParen, 1),
-            Token::new(TokenType::Number(1.0), 1),
-            Token::new(TokenType::Plus, 1),
-            Token::new(TokenType::Number(2.0), 1),
-            Token::new(TokenType::RightParen, 1),
-            Token::new(TokenType::Star, 1),
-            Token::new(TokenType::Number(3.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            Token::new(TokenType::Eof, 1),
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec![
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Binary {
-                    left: Box::new(Expression::Grouping {
-                        expression: Box::new(Expression::Binary { 
-                            left: Box::new(Expression::Number(1.0)),
-                            operator: TokenType::Plus,
-                            right: Box::new(Expression::Number(2.0))
-                        })},
-                    ),
-                    operator: TokenType::Star,
-                    right: Box::new(Expression::Number(3.0))
-                })
-            }
-        ]);
-    }
-
-    #[test]
-    fn test_comparison_operators() {
-        let tokens = vec![
-            Token::new(TokenType::Number(1.0), 1),
-            Token::new(TokenType::Equal, 1),
-            Token::new(TokenType::Number(2.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-
-            Token::new(TokenType::String("hello".into()), 1),
-            Token::new(TokenType::NotEqual, 1),
-            Token::new(TokenType::Number(4.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            
-            Token::new(TokenType::Boolean(false), 1),
-            Token::new(TokenType::StrictEqual, 1),
-            Token::new(TokenType::Boolean(true), 1),
-            Token::new(TokenType::Semicolon, 1),
-            
-            Token::new(TokenType::Boolean(false), 1),
-            Token::new(TokenType::StrictNotEqual, 1),
-            Token::new(TokenType::Number(2.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-
-            Token::new(TokenType::Number(1.0), 1),
-            Token::new(TokenType::GreaterThan, 1),
-            Token::new(TokenType::Number(2.0), 1),
-            Token::new(TokenType::Semicolon, 1),
-            
-            Token::new(TokenType::Null, 1),
-            Token::new(TokenType::LessThan, 1),
-            Token::new(TokenType::Undefined, 1),
-            Token::new(TokenType::Semicolon, 1),
-            
-            Token::new(TokenType::Boolean(false), 1),
-            Token::new(TokenType::GreaterThanOrEqual, 1),
-            Token::new(TokenType::Undefined, 1),
-            Token::new(TokenType::Semicolon, 1),
-            
-            Token::new(TokenType::String("hello".into()), 1),
-            Token::new(TokenType::LessThanOrEqual, 1),
-            Token::new(TokenType::Null, 1),
-            Token::new(TokenType::Semicolon, 1),
-
-            Token::new(TokenType::Eof, 1)
-        ];
-        let mut parser = Parser::new(tokens);
-        let result = parser.parse();
-
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec![
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::Number(1.0)),
-                    operator: TokenType::Equal,
-                    right: Box::new(Expression::Number(2.0))
-                })
-            },
-
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::String("hello".into())),
-                    operator: TokenType::NotEqual,
-                    right: Box::new(Expression::Number(4.0))
-                })
-            },
-            
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::Boolean(false)),
-                    operator: TokenType::StrictEqual,
-                    right: Box::new(Expression::Boolean(true))
-                })
-            },
-            
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::Boolean(false)),
-                    operator: TokenType::StrictNotEqual,
-                    right: Box::new(Expression::Number(2.0))
-                })
-            },
-            
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::Number(1.0)),
-                    operator: TokenType::GreaterThan,
-                    right: Box::new(Expression::Number(2.0))
-                })
-            },
-            
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::Null),
-                    operator: TokenType::LessThan,
-                    right: Box::new(Expression::Undefined)
-                })
-            },
-
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::Boolean(false)),
-                    operator: TokenType::GreaterThanOrEqual,
-                    right: Box::new(Expression::Undefined)
-                })
-            },
-            
-            Statement::ExpressionStatement { 
-                expression: Box::new(Expression::Comparison { 
-                    left: Box::new(Expression::String("hello".into())),
-                    operator: TokenType::LessThanOrEqual,
-                    right: Box::new(Expression::Null)
-                })
-            }
-        ]);
-    }
-}
+mod tests;
