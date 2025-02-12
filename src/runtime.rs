@@ -147,6 +147,7 @@ impl Runtime {
     fn call_function(&self, callee: &Expression, args: &Vec<Expression>) -> Result<RuntimeValue, String> {
       let function = self.get_function(callee)?;
       let evaluated_args = self.evaluate_arguments(args)?;
+      println!("runtime>: function {:?} called with {:?}", callee, evaluated_args);
       
       let (body, params) = match function {
         Statement::FunctionDeclaration { body, params, .. } => (body, params),
@@ -159,7 +160,9 @@ impl Runtime {
       }
       self.bind_params(params, &evaluated_args, &mut local_scope)?;
       
-      self.execute_function_body(local_scope, body)
+      let result = self.execute_function_body(local_scope, body)?;
+      println!("runtime>: function {:?} returned {:?}", callee, result);
+      Ok(result)
     }
 
     fn get_function(&self, callee: &Expression) -> Result<&Statement, String> {
