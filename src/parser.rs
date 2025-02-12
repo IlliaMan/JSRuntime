@@ -115,10 +115,22 @@ impl Parser {
         Ok(params)
     }
 
-    // FUNCTION_BODY -> TokenType::LeftSquareParen (DECLARATION | EXPRESSION_STATEMENT)* (FUNCTION_RETURN)? TokenType::RightSquareParen
+    // FUNCTION_BODY -> TokenType::LeftSquareParen (FUNCTION_BODY_CONTENT)* TokenType::RightSquareParen
     fn function_body(&mut self) -> Result<Vec<Statement>, String> {
         self.consume_token_type(TokenType::LeftSquareParen, "Expected '{' to begin function body.")?;
 
+        let mut statements = vec![];
+        if self.peek().kind != TokenType::RightSquareParen {
+            statements = self.function_body_content()?;
+        }
+        
+        self.consume_token_type(TokenType::RightSquareParen, "Expected '}' to end function body.")?;
+
+        Ok(statements)
+    }
+
+    // FUNCTION_BODY_CONTENT -> DECLARATION | EXPRESSION_STATEMENT | FUNCTION_RETURN
+    fn function_body_content(&mut self) -> Result<Vec<Statement>, String> {
         let mut statements = vec![];
         let mut is_return_found = false;
         while self.peek().kind != TokenType::RightSquareParen {
@@ -133,8 +145,6 @@ impl Parser {
             };
             statements.push(statement?);
         }
-
-        self.consume_token_type(TokenType::RightSquareParen, "Expected '}' to end function body.")?;
 
         if !is_return_found {
             statements.push(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
