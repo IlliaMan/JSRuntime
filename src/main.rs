@@ -1,17 +1,24 @@
-mod scanner;
 mod parser;
 mod runtime;
+mod scanner;
 
-use std::{env::{self, Args}, fs, io, path::Path};
-use scanner::Scanner;
 use parser::Parser;
 use runtime::Runtime;
+use scanner::Scanner;
+use std::{
+    env::{self, Args},
+    fs, io,
+    path::Path,
+};
 
 fn get_js_content(mut args: Args) -> io::Result<String> {
     let path: String = args.nth(1).expect("<path> is not provided");
     let path = Path::new(&path);
     if path.extension().and_then(|ext| ext.to_str()) != Some("js") {
-        return Err(io::Error::new(io::ErrorKind::Other,"only .js files are accepted"));
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            "only .js files are accepted",
+        ));
     }
 
     Ok(fs::read_to_string(path)?)
@@ -33,7 +40,7 @@ fn main() -> io::Result<()> {
             println!("AST: {:#?}", ast);
             let mut runtime = Runtime::new();
             let _ = runtime.interpret(ast);
-        },
+        }
         Err(e) => eprintln!("Parse error: {}", e),
     };
 

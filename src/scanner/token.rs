@@ -7,23 +7,19 @@ pub struct Token {
 
 impl Token {
     pub fn new(kind: TokenType, line: usize) -> Self {
-        Self {
-            kind,
-            line,
-        }
+        Self { kind, line }
     }
 }
 
 impl fmt::Debug for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-      write!(f, "Token {{ kind: {:?}, line: {:?}}}", self.kind, self.line)
+        write!(f, "Token {{ kind: {:?}, line: {:?}}}", self.kind, self.line)
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
-    LeftParen, // (
+    LeftParen,  // (
     RightParen, // )
     LeftSquareParen, // [
     RightSquareParen, // ]
@@ -50,7 +46,7 @@ pub enum TokenType {
     Boolean(bool),
     Null,
     Undefined,
-    
+
     // Binding Keywords
     KeywordLet,
     KeywordConst,
@@ -121,7 +117,7 @@ impl From<&[char]> for TokenType {
             "!==" => Self::StrictNotEqual,
             ">=" => Self::GreaterThanOrEqual,
             "<=" => Self::LessThanOrEqual,
-            _ => Self::Identifier(String::from(value))
+            _ => Self::Identifier(String::from(value)),
         }
     }
 }
