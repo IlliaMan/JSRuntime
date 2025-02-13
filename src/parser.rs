@@ -39,6 +39,7 @@ impl Parser {
 
         match token.kind {
             TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
+            TokenType::Function => self.function_declaration(),
             _ => self.expression_statement(),
         }
     }
@@ -77,6 +78,94 @@ impl Parser {
       let expr = self.comparison()?;
       self.consume_token_type(TokenType::Semicolon, "expected ';' after expression statement")?;
       Ok(Statement::ExpressionStatement { expression: Box::new(expr) })
+    }
+
+    // FUNCTION_DECLARATION ->  TokenType::Function IDENTIFIER TokenType::LeftParen FUNCTION_PARAMS? TokenType::RightParen FUNCTION_BODY
+    fn function_declaration(&mut self) -> Result<Statement, String> {
+        let _ = self.consume_token();
+        let identifier = self.identifier()?;
+        self.consume_token_type(TokenType::LeftParen, "expected '(' after function name")?;
+        let mut params = vec![];
+        if self.peek().kind != TokenType::RightParen {
+            params = self.function_params()?;
+        }
+        self.consume_token_type(TokenType::RightParen, "expected ')' after function arguments")?;
+        let mut body = self.function_body()?;
+        if body.len() == 0 {
+            body = vec![ Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })}];
+        }
+        
+        Ok(Statement::FunctionDeclaration { 
+            name: Box::new(identifier),
+            params: Box::new(params),
+            body: Box::new(body)
+        })
+    }
+
+    // FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)?
+    fn function_params(&mut self) -> Result<Vec<Expression>, String> {
+        let mut params = vec![];
+        params.push(self.identifier()?);
+        
+        while self.peek().kind == TokenType::Comma {
+            self.consume_token();
+            params.push(self.identifier()?);
+        }
+
+        Ok(params)
+    }
+
+    // FUNCTION_BODY -> TokenType::LeftSquareParen (FUNCTION_BODY_CONTENT)* TokenType::RightSquareParen
+    fn function_body(&mut self) -> Result<Vec<Statement>, String> {
+        self.consume_token_type(TokenType::LeftSquareParen, "Expected '{' to begin function body.")?;
+
+        let mut statements = vec![];
+        if self.peek().kind != TokenType::RightSquareParen {
+            statements = self.function_body_content()?;
+        }
+        
+        self.consume_token_type(TokenType::RightSquareParen, "Expected '}' to end function body.")?;
+
+        Ok(statements)
+    }
+
+    // FUNCTION_BODY_CONTENT -> DECLARATION | EXPRESSION_STATEMENT | FUNCTION_RETURN
+    fn function_body_content(&mut self) -> Result<Vec<Statement>, String> {
+        let mut statements = vec![];
+        let mut is_return_found = false;
+        while self.peek().kind != TokenType::RightSquareParen {
+            let statement = match self.peek().kind {
+                TokenType::Function => return Err(format!("line {}: Functions inside functions are not yet supported", self.peek().line)),
+                TokenType::Return => {
+                    is_return_found = true;
+                    self.function_return()
+                },
+                TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
+                _ => self.expression_statement(),
+            };
+            statements.push(statement?);
+        }
+
+        if !is_return_found {
+            statements.push(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
+        }
+
+        Ok(statements)
+    }
+
+    // FUNCTION_RETURN -> TokenType::Return COMPARISON? TokenType::Semicolon
+    fn function_return(&mut self) -> Result<Statement, String> {
+        self.consume_token();
+
+        if self.peek().kind == TokenType::Semicolon {
+            self.consume_token();
+            return Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
+        }
+
+        let expr = self.comparison()?;
+        self.consume_token_type(TokenType::Semicolon, "expected ';' after return statement")?;
+
+        Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(expr) }) })
     }
     
     // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
@@ -139,7 +228,7 @@ impl Parser {
         Ok(expr)
     }
 
-    // FACTOR -> LITERAL | UNARY | GROUPING
+    // FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING | CALL 
     fn factor(&mut self) -> Result<Expression, String> {
         let token = self.peek();
 
@@ -147,9 +236,44 @@ impl Parser {
             TokenType::Number(_) | TokenType::String(_) | TokenType::Boolean(_) | TokenType::Null | TokenType::Undefined => self.literal(),
             TokenType::LeftParen => self.grouping(),
             TokenType::Minus => self.unary(),
-            TokenType::Identifier(_) => self.identifier(),
+            TokenType::Identifier(_) => {
+                let mut expr = self.identifier()?;
+                if self.peek().kind == TokenType::LeftParen {
+                    self.go_to_previous_token();
+                    expr = self.call()?;
+                }
+
+                Ok(expr)
+            },
             _ => Err(format!("line {}: Expected factor (number, '(', unary -) but got {:?}", token.line, token.kind))
         }
+    }
+
+    // CALL -> IDENTIFIER TokenType::LeftParen ARGUMENTS? TokenType::RightParen
+    fn call(&mut self) -> Result<Expression, String> {
+        let identifier: Expression = self.identifier()?;
+        self.consume_token_type(TokenType::LeftParen, format!("expected '(' for {:?} function call", identifier).as_str())?;
+        if self.peek().kind == TokenType::RightParen {
+            self.consume_token();
+            return Ok(Expression::Call { callee: Box::new(identifier), args: Box::new(vec![]) });
+        }
+
+        let args = self.arguments()?;
+        self.consume_token_type(TokenType::RightParen, format!("expected ')' for {:?} function call", identifier).as_str())?;
+        Ok(Expression::Call { callee: Box::new(identifier), args: Box::new(args) })
+    } 
+    
+    // ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*
+    fn arguments(&mut self) -> Result<Vec<Expression>, String> {
+        let mut args = vec![];
+        args.push(self.comparison()?);
+
+        while self.peek().kind == TokenType::Comma {
+            self.consume_token();
+            args.push(self.comparison()?);
+        }
+
+        Ok(args)
     }
 
     // LITERAL -> TokenType::Number
@@ -213,6 +337,12 @@ impl Parser {
         self.previous()
     }
 
+    fn go_to_previous_token(&mut self) {
+        if self.position != 0 {
+            self.position -= 1;
+        }
+    }
+
     fn peek(&self) -> &Token {
         if self.is_end() {
             // TokenType::Eof is always present
@@ -234,7 +364,7 @@ impl Parser {
 #[derive(Debug, PartialEq)]
 pub struct Identifier(String);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
   ExpressionStatement {
     expression: Box<Expression>,
@@ -244,10 +374,17 @@ pub enum Statement {
     // TODO: Need a way to have sort of Expression::Identifier as type here
     name: Box<Expression>,
     value: Box<Option<Expression>>,
+  },
+  FunctionDeclaration {
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    name: Box<Expression>,
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    params: Box<Vec<Expression>>,
+    body: Box<Vec<Statement>>,
   }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Number(f64),
     String(String),
@@ -271,6 +408,15 @@ pub enum Expression {
         left: Box<Expression>,
         operator: TokenType,
         right: Box<Expression>,
+    },
+    Call {
+        // TODO: Need a way to have sort of Expression::Identifier as type here
+        callee: Box<Expression>,
+        // TODO: Need a way to have sort of Expression::Identifier as type here
+        args: Box<Vec<Expression>>
+    },
+    Return {
+        expression: Box<Expression>,
     },
 }
 
@@ -678,5 +824,324 @@ mod tests {
                 })
             }
         ]);
+    }
+
+    #[test]
+    fn test_function_declaration_no_params() {
+        let tokens = vec![
+            Token::new(TokenType::Function, 1),
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::LeftSquareParen, 1),
+            Token::new(TokenType::Return, 1),
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::RightSquareParen, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::FunctionDeclaration {
+                name: Box::new(Expression::Identifier("hello".into())),
+                params: Box::new(vec![]),
+                body: Box::new(vec![Statement::ExpressionStatement {
+                    expression: Box::new(
+                        Expression::Return { expression: Box::new(Expression::Identifier("hello".into())) },
+                    )}
+                ])
+            }
+        ]);
+    }
+
+    #[test]
+    fn test_function_declaration_empty_body() {
+        let tokens = vec![
+            Token::new(TokenType::Function, 1),
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::LeftSquareParen, 1),
+            Token::new(TokenType::RightSquareParen, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::FunctionDeclaration {
+                name: Box::new(Expression::Identifier("hello".into())),
+                params: Box::new(vec![]),
+                body: Box::new(vec![
+                    Statement::ExpressionStatement {
+                        expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })
+                    }
+                ])
+            }
+        ]);
+    }
+
+    #[test]
+    fn test_function_declaration_with_return_nothing() {
+        let tokens = vec![
+            Token::new(TokenType::Function, 1),
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::LeftSquareParen, 1),
+            Token::new(TokenType::Return, 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::RightSquareParen, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::FunctionDeclaration {
+                name: Box::new(Expression::Identifier("hello".into())),
+                params: Box::new(vec![]),
+                body: Box::new(vec![
+                    Statement::ExpressionStatement {
+                        expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })
+                    }
+                ])
+            }
+        ]);
+    }
+
+    #[test]
+    fn test_function_declaration_with_params() {
+        let tokens = vec![
+            Token::new(TokenType::Function, 1),
+            Token::new(TokenType::Identifier("add".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::Identifier("x".into()), 1),
+            Token::new(TokenType::Comma, 1),
+            Token::new(TokenType::Identifier("y".into()), 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::LeftSquareParen, 1),
+            Token::new(TokenType::Return, 1),
+            Token::new(TokenType::Identifier("x".into()), 1),
+            Token::new(TokenType::Plus, 1),
+            Token::new(TokenType::Identifier("y".into()), 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::RightSquareParen, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![
+            Statement::FunctionDeclaration {
+                name: Box::new(Expression::Identifier("add".into())),
+                params: Box::new(vec![Expression::Identifier("x".into()), Expression::Identifier("y".into())]),
+                body: Box::new(vec![
+                    Statement::ExpressionStatement {
+                        expression: Box::new(Expression::Return { expression: Box::new(Expression::Binary { 
+                            left: Box::new(Expression::Identifier("x".into())),
+                            operator: TokenType::Plus,
+                            right: Box::new(Expression::Identifier("y".into()))
+                        })})
+                    }])
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn test_function_declaration_with_invalid_syntax() {
+        let tokens = vec![
+            Token::new(TokenType::Function, 1),
+            Token::new(TokenType::Identifier("get".into()), 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Return, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_err());
+        
+        let tokens = vec![
+            Token::new(TokenType::Function, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_err());
+
+        let tokens = vec![
+            Token::new(TokenType::Function, 1),
+            Token::new(TokenType::Identifier("add".into()), 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Comma, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::LeftSquareParen, 1),
+            Token::new(TokenType::RightSquareParen, 1),
+            Token::new(TokenType::Eof, 1),
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_valid_function_calls() {
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Eof, 1)
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
+                expression: Box::new(Expression::Call {
+                    callee: Box::new(Expression::Identifier("hello".into())),
+                    args: Box::new(vec![])
+                })
+            }
+        ]);
+        
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 2),
+            Token::new(TokenType::Identifier("name".into()), 3),
+            Token::new(TokenType::Comma, 4),
+            Token::new(TokenType::Identifier("surname".into()), 5),
+            Token::new(TokenType::RightParen, 6),
+            Token::new(TokenType::Semicolon, 7),
+            Token::new(TokenType::Eof, 8)
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
+                expression: Box::new(Expression::Call {
+                    callee: Box::new(Expression::Identifier("hello".into())),
+                    args: Box::new(vec![
+                        Expression::Identifier("name".into()),
+                        Expression::Identifier("surname".into()),
+                    ])
+                })
+            }
+        ]);
+        
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+
+            Token::new(TokenType::Identifier("name".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Comma, 1),
+
+            Token::new(TokenType::Number(1.0), 1),
+            Token::new(TokenType::Comma, 1),
+
+            Token::new(TokenType::String("surname".into()), 1),
+
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Eof, 1)
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
+                expression: Box::new(Expression::Call {
+                    callee: Box::new(Expression::Identifier("hello".into())),
+                    args: Box::new(vec![
+                        Expression::Call {
+                            callee: Box::new(Expression::Identifier("name".into())),
+                            args: Box::new(vec![]),
+                        },
+                        Expression::Number(1.0),
+                        Expression::String("surname".into())
+                    ])
+                })
+            }
+        ]);
+    }
+    
+    #[test]
+    fn test_invalid_function_calls() {
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Eof, 1)
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_err());
+        
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::Semicolon, 1),
+            Token::new(TokenType::Eof, 1)
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_err());
+        
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::Comma, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Eof, 1)
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_err());
+        
+        let tokens = vec![
+            Token::new(TokenType::Identifier("hello".into()), 1),
+            Token::new(TokenType::LeftParen, 1),
+            Token::new(TokenType::Boolean(true), 1),
+            Token::new(TokenType::Comma, 1),
+            Token::new(TokenType::RightParen, 1),
+            Token::new(TokenType::Eof, 1)
+        ];
+
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+
+        assert!(result.is_err());
     }
 }
