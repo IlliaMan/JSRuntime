@@ -1,4 +1,5 @@
-use super::{token::TokenType, Scanner};
+use crate::scanner::token::TokenType;
+use super::*;
 
 fn get_token_types(source: &str) -> Vec<TokenType> {
     let mut scanner = Scanner::new(source.into());
@@ -175,4 +176,111 @@ fn test_edge_cases() {
     assert_eq!(get_token_types(""), vec![TokenType::Eof]);
 
     assert_eq!(get_token_types("   \t\n\r"), vec![TokenType::Eof]);
+}
+
+#[test]
+fn test_function_declarations() {
+    assert_eq!(
+        get_token_types("function hello() {}"),
+        vec![
+            TokenType::Function,
+            TokenType::Identifier("hello".into()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::LeftSquareParen,
+            TokenType::RightSquareParen,
+            TokenType::Eof,
+        ]
+    );
+
+    assert_eq!(
+        get_token_types("function get(a) {}"),
+        vec![
+            TokenType::Function,
+            TokenType::Identifier("get".into()),
+            TokenType::LeftParen,
+            TokenType::Identifier("a".into()),
+            TokenType::RightParen,
+            TokenType::LeftSquareParen,
+            TokenType::RightSquareParen,
+            TokenType::Eof,
+        ]
+    );
+    
+    assert_eq!(
+        get_token_types("function say(a1, a3,a4) {}"),
+        vec![
+            TokenType::Function,
+            TokenType::Identifier("say".into()),
+            TokenType::LeftParen,
+            TokenType::Identifier("a1".into()),
+            TokenType::Comma,
+            TokenType::Identifier("a3".into()),
+            TokenType::Comma,
+            TokenType::Identifier("a4".into()),
+            TokenType::RightParen,
+            TokenType::LeftSquareParen,
+            TokenType::RightSquareParen,
+            TokenType::Eof,
+        ]
+    );
+    
+    assert_eq!(
+        get_token_types("function make() { x + 1;}"),
+        vec![
+            TokenType::Function,
+            TokenType::Identifier("make".into()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::LeftSquareParen,
+            TokenType::Identifier("x".into()),
+            TokenType::Plus,
+            TokenType::Number(1.0),
+            TokenType::Semicolon,
+            TokenType::RightSquareParen,
+            TokenType::Eof,
+        ]
+    );
+}
+
+#[test]
+fn test_function_calls() {
+    assert_eq!(
+        get_token_types("hello();"),
+        vec![
+            TokenType::Identifier("hello".into()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Semicolon,
+            TokenType::Eof,
+        ]
+    );
+    
+    assert_eq!(
+        get_token_types("hello(name, surname);"),
+        vec![
+            TokenType::Identifier("hello".into()),
+            TokenType::LeftParen,
+            TokenType::Identifier("name".into()),
+            TokenType::Comma,
+            TokenType::Identifier("surname".into()),
+            TokenType::RightParen,
+            TokenType::Semicolon,
+            TokenType::Eof,
+        ]
+    );
+    
+    assert_eq!(
+        get_token_types("assert(true, 'hello');"),
+        vec![
+            TokenType::Identifier("assert".into()),
+            TokenType::LeftParen,
+            TokenType::Boolean(true),
+            TokenType::Comma,
+            TokenType::String("hello".into()),
+            TokenType::RightParen,
+            TokenType::Semicolon,
+            TokenType::Eof,
+        ]
+    );
 }

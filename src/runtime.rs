@@ -11,6 +11,8 @@ pub struct Runtime {
 pub struct Environment {
     variables: HashMap<String, RuntimeValue>,
     constants: HashSet<String>,
+    // TODO: move out Statement::FunctionDeclaration from enum for less ambiguity
+    functions: HashMap<String, Statement>,
 }
 
 impl Environment {
@@ -18,6 +20,7 @@ impl Environment {
         Self {
             variables: HashMap::new(),
             constants: HashSet::new(),
+            functions: HashMap::new(),
         }
     }
 }
@@ -48,44 +51,46 @@ impl Runtime {
     }
 
     fn evaluate_statement(&mut self, statement: Statement) -> Result<(), String> {
-        match statement {
-            Statement::Declaration {
-                is_const,
-                name,
-                value,
-            } => {
-                let value = match &*value {
-                    Some(expr) => self.evalutate_expression(expr)?,
-                    None => RuntimeValue::Undefined,
-                };
+      match statement {
+        Statement::Declaration { is_const, name, value} => {
+          let value = match &*value {
+            Some(expr) => self.evalutate_expression(expr)?,
+            None => RuntimeValue::Undefined,
+          };
 
-                let name = match &*name {
-                    Expression::Identifier(name) => String::from(name),
-                    _ => panic!(
-                        "parser bug: name can only Expression::Identifier, got {:?}",
-                        name
-                    ),
-                };
+          let name = match &*name {
+            Expression::Identifier(name) => String::from(name),
+            _ => panic!("parser bug: name can only Expression::Identifier, got {:?}", name),
+          };
 
-                if self.environment.variables.contains_key(&name) {
-                    return Err(format!("variable {} already declared", name));
-                }
+          if self.environment.variables.contains_key(&name) {
+            return Err(format!("variable {} already declared", name));
+          }
 
-                if is_const {
-                    self.environment.constants.insert(name.clone());
-                }
+          if is_const {
+            self.environment.constants.insert(name.clone());
+          }
 
-                println!("runtime>: created {:?} = {:?}", name, value);
-                self.environment.variables.insert(name, value);
-            }
-            Statement::ExpressionStatement { expression } => {
-                let value = self.evalutate_expression(&expression)?;
+          println!("runtime>: created {:?} = {:?}", name, value);
+          self.environment.variables.insert(name, value);
+        },
+        Statement::ExpressionStatement { expression} => {
+          let value = self.evalutate_expression(&expression)?;
 
-                println!("runtime>: {:?}", value);
-            }
-        }
+          println!("runtime>: {:?}", value);
+        },
+        Statement::FunctionDeclaration { name, params, body } => {
+          let function_name = match &*name {
+            Expression::Identifier(name) => String::from(name),
+            _ => panic!("parser bug: function name can only Expression::Identifier, got {:?}", name),
+          };
 
-        Ok(())
+          println!("runtime>: created {:?}({:?})", function_name, params);
+          self.environment.functions.insert(function_name, Statement::FunctionDeclaration { name, params, body });
+        },
+      }
+
+      Ok(())
     }
 
     fn evalutate_expression(&self, expression: &Expression) -> Result<RuntimeValue, String> {
@@ -168,8 +173,80 @@ impl Runtime {
                         left_value, operator, right_value
                     )),
                 }
+            },
+            Expression::Call { callee, args } => self.call_function(&*callee, &*args),
+            Expression::Return { expression } => self.evalutate_expression(expression),
+        }
+    }
+
+    fn call_function(&self, callee: &Expression, args: &Vec<Expression>) -> Result<RuntimeValue, String> {
+      let function = self.get_function(callee)?;
+      let evaluated_args = self.evaluate_arguments(args)?;
+      println!("runtime>: function {:?} called with {:?}", callee, evaluated_args);
+      
+      let (body, params) = match function {
+        Statement::FunctionDeclaration { body, params, .. } => (body, params),
+        _ => return Err(String::from("expected Statement::FunctionDeclaration as function"))
+      };
+      
+      let mut local_scope = Environment::new();
+      for (key, value) in &self.environment.functions {
+        local_scope.functions.insert(key.clone(), value.clone());
+      }
+      self.bind_params(params, &evaluated_args, &mut local_scope)?;
+      
+      let result = self.execute_function_body(local_scope, body)?;
+      println!("runtime>: function {:?} returned {:?}", callee, result);
+      Ok(result)
+    }
+
+    fn get_function(&self, callee: &Expression) -> Result<&Statement, String> {
+      let callee = match callee {
+        Expression::Identifier(name) => name,
+        _ => return Err(format!("expected Expression::Identifier as callee Expression: {:?}", callee))
+      };
+
+      self.environment.functions
+        .get(callee)
+        .ok_or(format!("function {:?} is not defined (hoisting is not supported)", callee))
+    }
+
+    fn evaluate_arguments(&self, args: &Vec<Expression>) -> Result<Vec<RuntimeValue>, String> {
+      args.iter()
+        .map(|arg| self.evalutate_expression(arg))
+        .collect()
+    }
+
+    fn bind_params(&self, params: &Vec<Expression>, values: &Vec<RuntimeValue>, environment: &mut Environment) -> Result<(), String> {
+      for (i, param) in params.iter().enumerate() {
+        let param_name = match param {
+            Expression::Identifier(param) => String::from(param),
+            _ => return Err(String::from("param must be Identifier")),
+        };
+
+        let value = values.get(i).cloned().unwrap_or(RuntimeValue::Undefined);
+        environment.variables.insert(param_name, value);
+      }
+
+      Ok(())
+    } 
+
+    fn execute_function_body(&self, local_scope: Environment, body: &Vec<Statement>) -> Result<RuntimeValue, String> {
+      let mut runtime = Runtime { environment: local_scope };
+
+      for statement in body.iter() {
+        if let Statement::ExpressionStatement { expression } = statement {
+            if let Expression::Return { expression } = &**expression {
+                return runtime.evalutate_expression(expression);
             }
         }
+        
+        if let Err(error) = runtime.evaluate_statement(statement.clone()) {
+          return Err(error);
+        }
+      }
+    
+      Ok(RuntimeValue::Undefined)
     }
 
     fn compare_numbers(

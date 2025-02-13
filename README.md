@@ -20,6 +20,16 @@ This project implements a JS runtime that supports a subset of JS.
   - `let` with optional initializer: `let x = 5;`
   - `const` with required initializer: `const PI = 3.14;`
 
+- **Functions**
+  - Function declarations: `function name(params) { body }`
+  - Parameter handling:
+    - Missing parameters get `undefined` value
+    - Extra arguments are ignored
+  - Return statements:
+    - Explicit returns with `return value;`
+    - Implicit returns with `undefined` for missing returns
+  - No function hoisting (must be declared before use)
+
 - **Basic Type System**
   - Primitive types
     - Number type (double-precision floating point)
@@ -67,6 +77,22 @@ let isEqual = x == y;
 let isNullOrUndefined = b == c;
 let stringComparison = z == a;
 let numericComparison = ANSWER > 10;
+
+// Function declarations
+function add(x, y) {
+  const text = 'add function';
+  return x + y;
+}
+
+function emptyBody() {}
+
+function simpleReturn() {
+  return;
+}
+
+// Function calls
+let addResult = add(result, 7);
+emptyBody();
 ```
 
 ## Language Grammar
@@ -76,11 +102,21 @@ The currently implemented grammar (will be updated as features are added):
 ```bash
 PROGRAM -> STATEMENT* TokenType::Eof
 
-STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
+STATEMENT -> DECLARATION | FUNCTION_DECLARATION | EXPRESSION_STATEMENT
 
 DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst)
                IDENTIFIER (TokenType::Assign COMPARISON)? 
                TokenType::Semicolon
+
+FUNCTION_DECLARATION ->  TokenType::Function IDENTIFIER TokenType::LeftParen FUNCTION_PARAMS? TokenType::RightParen FUNCTION_BODY
+
+FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)*
+
+FUNCTION_BODY -> TokenType::LeftSquareParen (FUNCTION_BODY_CONTENT)* TokenType::RightSquareParen
+
+FUNCTION_BODY_CONTENT -> DECLARATION | EXPRESSION_STATEMENT | FUNCTION_RETURN
+
+FUNCTION_RETURN -> TokenType::Return COMPARISON? TokenType::Semicolon
 
 EXPRESSION_STATEMENT -> COMPARISON TokenType::Semicolon
 
@@ -90,9 +126,10 @@ EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
 
 TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
 
-FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING
+FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING | CALL
 
-LITERAL -> TokenType::Number | TokenType::String | TokeType::Boolean | TokenType::Null | TokenType::Undefined
+LITERAL -> TokenType::Number | TokenType::String | TokeType::Boolean |
+           TokenType::Null | TokenType::Undefined
 
 GROUPING -> TokenType::LeftParen EXPRESSION TokenType::RightParen
 
@@ -105,6 +142,10 @@ COMPARISON_OPERATOR -> TokenType::Equal | TokenType::NotEqual |
               TokenType::GreaterThan | TokenType::GreaterThanOrEqual |
               TokenType::LessThanorEqual | | TokenType::LessThan
 
+CALL -> IDENTIFIER TokenType::LeftParen ARGUMENTS? TokenType::RightParen
+
+ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*
+
 IDENTIFIER -> TokenType::Identifier
 ```
 
@@ -112,7 +153,8 @@ IDENTIFIER -> TokenType::Identifier
 
 - Reference types: array, object
 - Operators: comparison (full support), string, logical, ternary, type, bitwise, unary
-- Function declaration
+- Nested functions, closures
+- Arrow functions
 - Control flow (if/else statements)
 - Automatic semicolon insertion (ASI)
 - Variable reassignment

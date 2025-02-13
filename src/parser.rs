@@ -42,6 +42,7 @@ impl Parser {
 
         match token.kind {
             TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
+            TokenType::Function => self.function_declaration(),
             _ => self.expression_statement(),
         }
     }
@@ -97,6 +98,94 @@ impl Parser {
         })
     }
 
+    // FUNCTION_DECLARATION ->  TokenType::Function IDENTIFIER TokenType::LeftParen FUNCTION_PARAMS? TokenType::RightParen FUNCTION_BODY
+    fn function_declaration(&mut self) -> Result<Statement, String> {
+        let _ = self.consume_token();
+        let identifier = self.identifier()?;
+        self.consume_token_type(TokenType::LeftParen, "expected '(' after function name")?;
+        let mut params = vec![];
+        if self.peek().kind != TokenType::RightParen {
+            params = self.function_params()?;
+        }
+        self.consume_token_type(TokenType::RightParen, "expected ')' after function arguments")?;
+        let mut body = self.function_body()?;
+        if body.len() == 0 {
+            body = vec![ Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })}];
+        }
+        
+        Ok(Statement::FunctionDeclaration { 
+            name: Box::new(identifier),
+            params: Box::new(params),
+            body: Box::new(body)
+        })
+    }
+
+    // FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)?
+    fn function_params(&mut self) -> Result<Vec<Expression>, String> {
+        let mut params = vec![];
+        params.push(self.identifier()?);
+        
+        while self.peek().kind == TokenType::Comma {
+            self.consume_token();
+            params.push(self.identifier()?);
+        }
+
+        Ok(params)
+    }
+
+    // FUNCTION_BODY -> TokenType::LeftSquareParen (FUNCTION_BODY_CONTENT)* TokenType::RightSquareParen
+    fn function_body(&mut self) -> Result<Vec<Statement>, String> {
+        self.consume_token_type(TokenType::LeftSquareParen, "Expected '{' to begin function body.")?;
+
+        let mut statements = vec![];
+        if self.peek().kind != TokenType::RightSquareParen {
+            statements = self.function_body_content()?;
+        }
+        
+        self.consume_token_type(TokenType::RightSquareParen, "Expected '}' to end function body.")?;
+
+        Ok(statements)
+    }
+
+    // FUNCTION_BODY_CONTENT -> DECLARATION | EXPRESSION_STATEMENT | FUNCTION_RETURN
+    fn function_body_content(&mut self) -> Result<Vec<Statement>, String> {
+        let mut statements = vec![];
+        let mut is_return_found = false;
+        while self.peek().kind != TokenType::RightSquareParen {
+            let statement = match self.peek().kind {
+                TokenType::Function => return Err(format!("line {}: Functions inside functions are not yet supported", self.peek().line)),
+                TokenType::Return => {
+                    is_return_found = true;
+                    self.function_return()
+                },
+                TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
+                _ => self.expression_statement(),
+            };
+            statements.push(statement?);
+        }
+
+        if !is_return_found {
+            statements.push(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
+        }
+
+        Ok(statements)
+    }
+
+    // FUNCTION_RETURN -> TokenType::Return COMPARISON? TokenType::Semicolon
+    fn function_return(&mut self) -> Result<Statement, String> {
+        self.consume_token();
+
+        if self.peek().kind == TokenType::Semicolon {
+            self.consume_token();
+            return Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
+        }
+
+        let expr = self.comparison()?;
+        self.consume_token_type(TokenType::Semicolon, "expected ';' after return statement")?;
+
+        Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(expr) }) })
+    }
+    
     // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
     fn comparison(&mut self) -> Result<Expression, String> {
         let mut expr = self.expression()?;
@@ -159,7 +248,7 @@ impl Parser {
         Ok(expr)
     }
 
-    // FACTOR -> LITERAL | UNARY | GROUPING
+    // FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING | CALL 
     fn factor(&mut self) -> Result<Expression, String> {
         let token = self.peek();
 
@@ -171,12 +260,44 @@ impl Parser {
             | TokenType::Undefined => self.literal(),
             TokenType::LeftParen => self.grouping(),
             TokenType::Minus => self.unary(),
-            TokenType::Identifier(_) => self.identifier(),
-            _ => Err(format!(
-                "line {}: Expected factor (number, '(', unary -) but got {:?}",
-                token.line, token.kind
-            )),
+            TokenType::Identifier(_) => {
+                let mut expr = self.identifier()?;
+                if self.peek().kind == TokenType::LeftParen {
+                    self.go_to_previous_token();
+                    expr = self.call()?;
+                }
+
+                Ok(expr)
+            },
+            _ => Err(format!("line {}: Expected factor (number, '(', unary -) but got {:?}", token.line, token.kind))
         }
+    }
+
+    // CALL -> IDENTIFIER TokenType::LeftParen ARGUMENTS? TokenType::RightParen
+    fn call(&mut self) -> Result<Expression, String> {
+        let identifier: Expression = self.identifier()?;
+        self.consume_token_type(TokenType::LeftParen, format!("expected '(' for {:?} function call", identifier).as_str())?;
+        if self.peek().kind == TokenType::RightParen {
+            self.consume_token();
+            return Ok(Expression::Call { callee: Box::new(identifier), args: Box::new(vec![]) });
+        }
+
+        let args = self.arguments()?;
+        self.consume_token_type(TokenType::RightParen, format!("expected ')' for {:?} function call", identifier).as_str())?;
+        Ok(Expression::Call { callee: Box::new(identifier), args: Box::new(args) })
+    } 
+    
+    // ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*
+    fn arguments(&mut self) -> Result<Vec<Expression>, String> {
+        let mut args = vec![];
+        args.push(self.comparison()?);
+
+        while self.peek().kind == TokenType::Comma {
+            self.consume_token();
+            args.push(self.comparison()?);
+        }
+
+        Ok(args)
     }
 
     // LITERAL -> TokenType::Number
@@ -258,6 +379,12 @@ impl Parser {
         self.previous()
     }
 
+    fn go_to_previous_token(&mut self) {
+        if self.position != 0 {
+            self.position -= 1;
+        }
+    }
+
     fn peek(&self) -> &Token {
         if self.is_end() {
             // TokenType::Eof is always present
@@ -279,20 +406,27 @@ impl Parser {
 #[derive(Debug, PartialEq)]
 pub struct Identifier(String);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
-    ExpressionStatement {
-        expression: Box<Expression>,
-    },
-    Declaration {
-        is_const: bool,
-        // TODO: Need a way to have sort of Expression::Identifier as type here
-        name: Box<Expression>,
-        value: Box<Option<Expression>>,
-    },
+  ExpressionStatement {
+    expression: Box<Expression>,
+  },
+  Declaration {
+    is_const: bool,
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    name: Box<Expression>,
+    value: Box<Option<Expression>>,
+  },
+  FunctionDeclaration {
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    name: Box<Expression>,
+    // TODO: Need a way to have sort of Expression::Identifier as type here
+    params: Box<Vec<Expression>>,
+    body: Box<Vec<Statement>>,
+  }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Number(f64),
     String(String),
@@ -316,5 +450,14 @@ pub enum Expression {
         left: Box<Expression>,
         operator: TokenType,
         right: Box<Expression>,
+    },
+    Call {
+        // TODO: Need a way to have sort of Expression::Identifier as type here
+        callee: Box<Expression>,
+        // TODO: Need a way to have sort of Expression::Identifier as type here
+        args: Box<Vec<Expression>>
+    },
+    Return {
+        expression: Box<Expression>,
     },
 }
