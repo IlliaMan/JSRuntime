@@ -1,6 +1,6 @@
-use super::token::{Token, TokenType};
+use crate::common::*;
 
-pub struct Scanner {
+pub struct Tokenizer {
     source: Vec<char>,
     position: usize,
 }
@@ -10,11 +10,11 @@ enum CommentType {
     Block,
 }
 
-impl Scanner {
+impl Tokenizer {
     pub fn new(source: String) -> Self {
         println!("--- Source Provided ---\n{}", source);
         println!("-----------------------\n");
-        Scanner {
+        Self {
             source: source.chars().collect(),
             position: 0,
         }

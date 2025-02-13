@@ -1,15 +1,12 @@
+mod common;
+mod tokenizer;
 mod parser;
 mod runtime;
-mod scanner;
 
 use parser::Parser;
 use runtime::Runtime;
-use scanner::Scanner;
-use std::{
-    env::{self, Args},
-    fs, io,
-    path::Path,
-};
+use tokenizer::Tokenizer;
+use std::{env::{self, Args}, fs, io, path::Path};
 
 fn get_js_content(mut args: Args) -> io::Result<String> {
     let path: String = args.nth(1).expect("<path> is not provided");
@@ -27,8 +24,8 @@ fn get_js_content(mut args: Args) -> io::Result<String> {
 fn main() -> io::Result<()> {
     let source = get_js_content(env::args())?;
 
-    let mut scanner = Scanner::new(source);
-    let tokens = scanner.tokenize();
+    let mut tokenizer = Tokenizer::new(source);
+    let tokens = tokenizer.tokenize();
 
     for token in tokens.iter() {
         println!("{:?}", token);

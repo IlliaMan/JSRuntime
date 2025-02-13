@@ -1,7 +1,5 @@
-
 use super::*;
-use crate::scanner::token::TokenType;
-use crate::scanner::Token;
+use crate::common::{*, ast::*};
 
 #[test]
 fn parse_literals() {
