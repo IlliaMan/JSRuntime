@@ -1,5 +1,8 @@
 use crate::scanner::{token::TokenType, Token};
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
@@ -315,6 +318,3 @@ pub enum Expression {
         right: Box<Expression>,
     },
 }
-
-#[cfg(test)]
-mod tests;

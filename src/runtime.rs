@@ -1,6 +1,6 @@
 use crate::{
     parser::{Expression, Statement},
-    scanner::{token::TokenType, Token},
+    scanner::token::TokenType,
 };
 use std::collections::{HashMap, HashSet};
 
