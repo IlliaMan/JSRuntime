@@ -408,11 +408,11 @@ fn test_function_declaration_no_params() {
         Token::new(TokenType::Identifier("hello".into()), 1),
         Token::new(TokenType::LeftParen, 1),
         Token::new(TokenType::RightParen, 1),
-        Token::new(TokenType::LeftSquareParen, 1),
+        Token::new(TokenType::LeftCurlyBrace, 1),
         Token::new(TokenType::Return, 1),
         Token::new(TokenType::Identifier("hello".into()), 1),
         Token::new(TokenType::Semicolon, 1),
-        Token::new(TokenType::RightSquareParen, 1),
+        Token::new(TokenType::RightCurlyBrace, 1),
         Token::new(TokenType::Eof, 1),
     ];
 
@@ -440,8 +440,8 @@ fn test_function_declaration_empty_body() {
         Token::new(TokenType::Identifier("hello".into()), 1),
         Token::new(TokenType::LeftParen, 1),
         Token::new(TokenType::RightParen, 1),
-        Token::new(TokenType::LeftSquareParen, 1),
-        Token::new(TokenType::RightSquareParen, 1),
+        Token::new(TokenType::LeftCurlyBrace, 1),
+        Token::new(TokenType::RightCurlyBrace, 1),
         Token::new(TokenType::Eof, 1),
     ];
 
@@ -469,10 +469,10 @@ fn test_function_declaration_with_return_nothing() {
         Token::new(TokenType::Identifier("hello".into()), 1),
         Token::new(TokenType::LeftParen, 1),
         Token::new(TokenType::RightParen, 1),
-        Token::new(TokenType::LeftSquareParen, 1),
+        Token::new(TokenType::LeftCurlyBrace, 1),
         Token::new(TokenType::Return, 1),
         Token::new(TokenType::Semicolon, 1),
-        Token::new(TokenType::RightSquareParen, 1),
+        Token::new(TokenType::RightCurlyBrace, 1),
         Token::new(TokenType::Eof, 1),
     ];
 
@@ -503,13 +503,13 @@ fn test_function_declaration_with_params() {
         Token::new(TokenType::Comma, 1),
         Token::new(TokenType::Identifier("y".into()), 1),
         Token::new(TokenType::RightParen, 1),
-        Token::new(TokenType::LeftSquareParen, 1),
+        Token::new(TokenType::LeftCurlyBrace, 1),
         Token::new(TokenType::Return, 1),
         Token::new(TokenType::Identifier("x".into()), 1),
         Token::new(TokenType::Plus, 1),
         Token::new(TokenType::Identifier("y".into()), 1),
         Token::new(TokenType::Semicolon, 1),
-        Token::new(TokenType::RightSquareParen, 1),
+        Token::new(TokenType::RightCurlyBrace, 1),
         Token::new(TokenType::Eof, 1),
     ];
 
@@ -568,8 +568,8 @@ fn test_function_declaration_with_invalid_syntax() {
         Token::new(TokenType::RightParen, 1),
         Token::new(TokenType::Comma, 1),
         Token::new(TokenType::RightParen, 1),
-        Token::new(TokenType::LeftSquareParen, 1),
-        Token::new(TokenType::RightSquareParen, 1),
+        Token::new(TokenType::LeftCurlyBrace, 1),
+        Token::new(TokenType::RightCurlyBrace, 1),
         Token::new(TokenType::Eof, 1),
     ];
 

@@ -2,8 +2,8 @@
 pub enum TokenType {
     LeftParen,  // (
     RightParen, // )
-    LeftSquareParen, // [
-    RightSquareParen, // ]
+    LeftCurlyBrace, // {
+    RightCurlyBrace, // }
     Plus,
     Minus,
     Star,
@@ -69,8 +69,8 @@ impl From<char> for TokenType {
             ';' => Self::Semicolon,
             '>' => Self::GreaterThan,
             '<' => Self::LessThan,
-            '{' => Self::LeftSquareParen,
-            '}' => Self::RightSquareParen,
+            '{' => Self::LeftCurlyBrace,
+            '}' => Self::RightCurlyBrace,
             ',' => Self::Comma,
             _ => Self::Unsupported(String::from(value))
         }

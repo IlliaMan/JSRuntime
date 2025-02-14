@@ -133,14 +133,14 @@ impl Parser {
 
     // FUNCTION_BODY -> TokenType::LeftSquareParen (FUNCTION_BODY_CONTENT)* TokenType::RightSquareParen
     fn function_body(&mut self) -> Result<Vec<Statement>, String> {
-        self.consume_token_type(TokenType::LeftSquareParen, "Expected '{' to begin function body.")?;
+        self.consume_token_type(TokenType::LeftCurlyBrace, "Expected '{' to begin function body.")?;
 
         let mut statements = vec![];
-        if self.peek().kind != TokenType::RightSquareParen {
+        if self.peek().kind != TokenType::RightCurlyBrace {
             statements = self.function_body_content()?;
         }
         
-        self.consume_token_type(TokenType::RightSquareParen, "Expected '}' to end function body.")?;
+        self.consume_token_type(TokenType::RightCurlyBrace, "Expected '}' to end function body.")?;
 
         Ok(statements)
     }
@@ -149,7 +149,7 @@ impl Parser {
     fn function_body_content(&mut self) -> Result<Vec<Statement>, String> {
         let mut statements = vec![];
         let mut is_return_found = false;
-        while self.peek().kind != TokenType::RightSquareParen {
+        while self.peek().kind != TokenType::RightCurlyBrace {
             let statement = match self.peek().kind {
                 TokenType::Function => return Err(format!("line {}: Functions inside functions are not yet supported", self.peek().line)),
                 TokenType::Return => {
