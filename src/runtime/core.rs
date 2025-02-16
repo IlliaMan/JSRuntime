@@ -219,12 +219,7 @@ impl Runtime {
       Ok(RuntimeValue::Undefined)
     }
 
-    fn compare_numbers(
-        &self,
-        a: f64,
-        b: f64,
-        operator: &TokenType,
-    ) -> Result<RuntimeValue, String> {
+    fn compare_numbers(&self, a: f64, b: f64, operator: &TokenType) -> Result<RuntimeValue, String> {
         match operator {
             TokenType::Equal | TokenType::StrictEqual => Ok(RuntimeValue::Boolean(a == b)),
             TokenType::NotEqual | TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(a != b)),
@@ -236,12 +231,7 @@ impl Runtime {
         }
     }
 
-    fn compare_booleans(
-        &self,
-        a: bool,
-        b: bool,
-        operator: &TokenType,
-    ) -> Result<RuntimeValue, String> {
+    fn compare_booleans(&self, a: bool, b: bool, operator: &TokenType) -> Result<RuntimeValue, String> {
         match operator {
             TokenType::Equal | TokenType::StrictEqual => Ok(RuntimeValue::Boolean(a == b)),
             TokenType::NotEqual | TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(a != b)),
@@ -253,12 +243,7 @@ impl Runtime {
         }
     }
 
-    fn compare_strings(
-        &self,
-        a: &str,
-        b: &str,
-        operator: &TokenType,
-    ) -> Result<RuntimeValue, String> {
+    fn compare_strings(&self, a: &str, b: &str, operator: &TokenType) -> Result<RuntimeValue, String> {
         match operator {
             TokenType::Equal | TokenType::StrictEqual => Ok(RuntimeValue::Boolean(a == b)),
             TokenType::NotEqual | TokenType::StrictNotEqual => Ok(RuntimeValue::Boolean(a != b)),
