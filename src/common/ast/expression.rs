@@ -27,7 +27,6 @@ pub enum Expression {
     },
     Call {
         callee: String,
-        // TODO: Need a way to have sort of Expression::Identifier as type here
         args: Box<Vec<Expression>>
     },
 }
