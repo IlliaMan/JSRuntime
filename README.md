@@ -137,7 +137,7 @@ LITERAL -> NUMBER | STRING | BOOLEAN | NULL | UNDEFINED
 
 IDENTIFIER -> '<sequence of characters that are not reserved words>'
 NUMBER -> '<number: integer and decimals>'
-STRING -> '<sequence of charachters surrounded by ' or " or `>'
+STRING -> '<sequence of characters surrounded by ' or " or `>'
 BOOLEAN -> true | false
 NULL -> null
 UNDEFINED -> undefined
