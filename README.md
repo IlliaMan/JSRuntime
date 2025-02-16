@@ -99,54 +99,49 @@ emptyBody();
 
 The currently implemented grammar (will be updated as features are added):
 
-```bash
-PROGRAM -> STATEMENT* TokenType::Eof
+```
+PROGRAM -> STATEMENT* EOF
 
-STATEMENT -> DECLARATION | FUNCTION_DECLARATION | EXPRESSION_STATEMENT
+STATEMENT -> DECLARATION
+           | FUNCTION_DECLARATION
+           | EXPRESSION_STATEMENT
+           | RETURN_STATEMENT
 
-DECLARATION -> (TokenType::KeywordLet | TokenType::KeywordConst)
-               IDENTIFIER (TokenType::Assign COMPARISON)? 
-               TokenType::Semicolon
+DECLARATION -> ('let' | 'const') IDENTIFIER ('=' COMPARISON)? ';'
+FUNCTION_DECLARATION ->  'function' IDENTIFIER '(' FUNCTION_PARAMS? ')' FUNCTION_BODY
+RETURN_STATEMENT -> 'return' COMPARISON? ';'
+EXPRESSION_STATEMENT -> COMPARISON ';'
 
-FUNCTION_DECLARATION ->  TokenType::Function IDENTIFIER TokenType::LeftParen FUNCTION_PARAMS? TokenType::RightParen FUNCTION_BODY
-
-FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)*
-
-FUNCTION_BODY -> TokenType::LeftSquareParen (FUNCTION_BODY_CONTENT)* TokenType::RightSquareParen
-
-FUNCTION_BODY_CONTENT -> DECLARATION | EXPRESSION_STATEMENT | FUNCTION_RETURN
-
-FUNCTION_RETURN -> TokenType::Return COMPARISON? TokenType::Semicolon
-
-EXPRESSION_STATEMENT -> COMPARISON TokenType::Semicolon
+FUNCTION_PARAMS -> IDENTIFIER (',' IDENTIFIER)*
+FUNCTION_BODY -> '{' (FUNCTION_BODY_CONTENT)* '}'
+FUNCTION_BODY_CONTENT -> DECLARATION | EXPRESSION_STATEMENT | RETURN_STATEMENT
 
 COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
+EXPRESSION -> TERM (('+' | '-') TERM)*
+TERM -> FACTOR (('*' | '/') FACTOR)*
+FACTOR -> LITERAL 
+        | IDENTIFIER 
+        | UNARY 
+        | GROUPING 
+        | CALL
 
-EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
+UNARY -> '-' FACTOR 
+GROUPING -> '(' EXPRESSION ')'
+CALL -> IDENTIFIER '(' ARGUMENTS? ')'
+ARGUMENTS ->  COMPARISON (',' COMPARISON)*
 
-TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
+OPERATOR -> '+' | '-' | '*' | '/'
+COMPARISON_OPERATOR -> '==' | '!=' | '===' | '!==' | '>' | '>=' | '<' | | '<='
 
-FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING | CALL
+LITERAL -> NUMBER | STRING | BOOLEAN | NULL | UNDEFINED
 
-LITERAL -> TokenType::Number | TokenType::String | TokeType::Boolean |
-           TokenType::Null | TokenType::Undefined
-
-GROUPING -> TokenType::LeftParen EXPRESSION TokenType::RightParen
-
-UNARY -> TokenType::Minus FACTOR 
-
-OPERATOR -> TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash
-
-COMPARISON_OPERATOR -> TokenType::Equal | TokenType::NotEqual |
-              TokenType::StrictEqual | TokenType::StrictNotEqual |
-              TokenType::GreaterThan | TokenType::GreaterThanOrEqual |
-              TokenType::LessThanorEqual | | TokenType::LessThan
-
-CALL -> IDENTIFIER TokenType::LeftParen ARGUMENTS? TokenType::RightParen
-
-ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*
-
-IDENTIFIER -> TokenType::Identifier
+IDENTIFIER -> '<sequence of characters that are not reserved words>'
+NUMBER -> '<number: integer and decimals>'
+STRING -> '<sequence of characters surrounded by ' or " or `>'
+BOOLEAN -> true | false
+NULL -> null
+UNDEFINED -> undefined
+EOF -> '<end-of-file>'
 ```
 
 # Roadmap

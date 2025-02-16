@@ -1,9 +1,9 @@
-use crate::scanner::token::TokenType;
-use super::*;
+use crate::common::*;
+use super::core::Tokenizer;
 
 fn get_token_types(source: &str) -> Vec<TokenType> {
-    let mut scanner = Scanner::new(source.into());
-    scanner.tokenize().into_iter().map(|t| t.kind).collect()
+    let mut tokenizer = Tokenizer::new(source.into());
+    tokenizer.tokenize().into_iter().map(|t| t.kind).collect()
 }
 
 #[test]
@@ -187,8 +187,8 @@ fn test_function_declarations() {
             TokenType::Identifier("hello".into()),
             TokenType::LeftParen,
             TokenType::RightParen,
-            TokenType::LeftSquareParen,
-            TokenType::RightSquareParen,
+            TokenType::LeftCurlyBrace,
+            TokenType::RightCurlyBrace,
             TokenType::Eof,
         ]
     );
@@ -201,8 +201,8 @@ fn test_function_declarations() {
             TokenType::LeftParen,
             TokenType::Identifier("a".into()),
             TokenType::RightParen,
-            TokenType::LeftSquareParen,
-            TokenType::RightSquareParen,
+            TokenType::LeftCurlyBrace,
+            TokenType::RightCurlyBrace,
             TokenType::Eof,
         ]
     );
@@ -219,8 +219,8 @@ fn test_function_declarations() {
             TokenType::Comma,
             TokenType::Identifier("a4".into()),
             TokenType::RightParen,
-            TokenType::LeftSquareParen,
-            TokenType::RightSquareParen,
+            TokenType::LeftCurlyBrace,
+            TokenType::RightCurlyBrace,
             TokenType::Eof,
         ]
     );
@@ -232,12 +232,12 @@ fn test_function_declarations() {
             TokenType::Identifier("make".into()),
             TokenType::LeftParen,
             TokenType::RightParen,
-            TokenType::LeftSquareParen,
+            TokenType::LeftCurlyBrace,
             TokenType::Identifier("x".into()),
             TokenType::Plus,
             TokenType::Number(1.0),
             TokenType::Semicolon,
-            TokenType::RightSquareParen,
+            TokenType::RightCurlyBrace,
             TokenType::Eof,
         ]
     );
