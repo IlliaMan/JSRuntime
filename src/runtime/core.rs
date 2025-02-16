@@ -146,12 +146,12 @@ impl Runtime {
                     )),
                 }
             },
-            Expression::Call { callee, args } => self.call_function(&*callee, &*args),
+            Expression::Call { callee, args } => self.call_function(callee, &*args),
             // Expression::Return { expression } => self.evalutate_expression(expression),
         }
     }
 
-    fn call_function(&self, callee: &Expression, args: &Vec<Expression>) -> Result<RuntimeValue, String> {
+    fn call_function(&self, callee: &String, args: &Vec<Expression>) -> Result<RuntimeValue, String> {
       let function = self.get_function(callee)?;
       let evaluated_args = self.evaluate_arguments(args)?;
       println!("runtime>: function {:?} called with {:?}", callee, evaluated_args);
@@ -172,12 +172,7 @@ impl Runtime {
       Ok(result)
     }
 
-    fn get_function(&self, callee: &Expression) -> Result<&Statement, String> {
-      let callee = match callee {
-        Expression::Identifier(name) => name,
-        _ => return Err(format!("expected Expression::Identifier as callee Expression: {:?}", callee))
-      };
-
+    fn get_function(&self, callee: &String) -> Result<&Statement, String> {
       self.environment.functions
         .get(callee)
         .ok_or(format!("function {:?} is not defined (hoisting is not supported)", callee))

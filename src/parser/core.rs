@@ -274,15 +274,18 @@ impl Parser {
     // CALL -> IDENTIFIER TokenType::LeftParen ARGUMENTS? TokenType::RightParen
     fn call(&mut self) -> Result<Expression, String> {
         let identifier: Expression = self.identifier()?;
+        let identifier = Expression::extract_string(&identifier)
+            .ok_or_else(|| format!("Expected function name as Expression::Identifier but got {:?}", identifier))?;
+
         self.consume_token_type(TokenType::LeftParen, format!("expected '(' for {:?} function call", identifier).as_str())?;
         if self.peek().kind == TokenType::RightParen {
             self.consume_token();
-            return Ok(Expression::Call { callee: Box::new(identifier), args: Box::new(vec![]) });
+            return Ok(Expression::Call { callee: identifier, args: Box::new(vec![]) });
         }
 
         let args = self.arguments()?;
         self.consume_token_type(TokenType::RightParen, format!("expected ')' for {:?} function call", identifier).as_str())?;
-        Ok(Expression::Call { callee: Box::new(identifier), args: Box::new(args) })
+        Ok(Expression::Call { callee: identifier, args: Box::new(args) })
     } 
     
     // ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*

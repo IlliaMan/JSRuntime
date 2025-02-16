@@ -593,7 +593,7 @@ fn test_valid_function_calls() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
             expression: Box::new(Expression::Call {
-                callee: Box::new(Expression::Identifier("hello".into())),
+                callee: "hello".into(),
                 args: Box::new(vec![])
             })
         }
@@ -616,7 +616,7 @@ fn test_valid_function_calls() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
             expression: Box::new(Expression::Call {
-                callee: Box::new(Expression::Identifier("hello".into())),
+                callee: "hello".into(),
                 args: Box::new(vec![
                     Expression::Identifier("name".into()),
                     Expression::Identifier("surname".into()),
@@ -650,10 +650,10 @@ fn test_valid_function_calls() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), vec![Statement::ExpressionStatement {
             expression: Box::new(Expression::Call {
-                callee: Box::new(Expression::Identifier("hello".into())),
+                callee: "hello".into(),
                 args: Box::new(vec![
                     Expression::Call {
-                        callee: Box::new(Expression::Identifier("name".into())),
+                        callee: "name".into(),
                         args: Box::new(vec![]),
                     },
                     Expression::Number(1.0),

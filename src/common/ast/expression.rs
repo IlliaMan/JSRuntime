@@ -26,9 +26,18 @@ pub enum Expression {
         right: Box<Expression>,
     },
     Call {
-        // TODO: Need a way to have sort of Expression::Identifier as type here
-        callee: Box<Expression>,
+        callee: String,
         // TODO: Need a way to have sort of Expression::Identifier as type here
         args: Box<Vec<Expression>>
     },
+}
+
+impl Expression {
+    pub fn extract_string(expr: &Self) -> Option<String> {
+        match expr {
+            Self::String(value) => Some(String::from(value)),
+            Self::Identifier(value) => Some(String::from(value)),
+            _ => None,
+        }
+    }
 }
