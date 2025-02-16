@@ -424,10 +424,10 @@ fn test_function_declaration_no_params() {
         Statement::FunctionDeclaration {
             name: Box::new(Expression::Identifier("hello".into())),
             params: Box::new(vec![]),
-            body: Box::new(vec![Statement::ExpressionStatement {
-                expression: Box::new(
-                    Expression::Return { expression: Box::new(Expression::Identifier("hello".into())) },
-                )}
+            body: Box::new(vec![
+                Statement::Return  {
+                    expression: Box::new(Expression::Identifier("hello".into())) 
+                }
             ])
         }
     ]);
@@ -454,8 +454,8 @@ fn test_function_declaration_empty_body() {
             name: Box::new(Expression::Identifier("hello".into())),
             params: Box::new(vec![]),
             body: Box::new(vec![
-                Statement::ExpressionStatement {
-                    expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })
+                Statement::Return { 
+                    expression: Box::new(Expression::Undefined)
                 }
             ])
         }
@@ -485,9 +485,7 @@ fn test_function_declaration_with_return_nothing() {
             name: Box::new(Expression::Identifier("hello".into())),
             params: Box::new(vec![]),
             body: Box::new(vec![
-                Statement::ExpressionStatement {
-                    expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })
-                }
+                Statement::Return { expression: Box::new(Expression::Undefined) }
             ])
         }
     ]);
@@ -522,13 +520,13 @@ fn test_function_declaration_with_params() {
             name: Box::new(Expression::Identifier("add".into())),
             params: Box::new(vec![Expression::Identifier("x".into()), Expression::Identifier("y".into())]),
             body: Box::new(vec![
-                Statement::ExpressionStatement {
-                    expression: Box::new(Expression::Return { expression: Box::new(Expression::Binary { 
+                Statement::Return { 
+                    expression: Box::new(Expression::Binary { 
                         left: Box::new(Expression::Identifier("x".into())),
                         operator: TokenType::Plus,
                         right: Box::new(Expression::Identifier("y".into()))
-                    })})
-                }])
+                    })}
+                ])
             }
         ]
     );

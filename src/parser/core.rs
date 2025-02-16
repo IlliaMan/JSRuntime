@@ -34,13 +34,14 @@ impl Parser {
         Ok(statements)
     }
 
-    // STATEMENT -> DECLARATION | EXPRESSION_STATEMENT
+    // STATEMENT -> DECLARATION | FUNCTION_DECLARATION | EXPRESSION_STATEMENT | RETURN_STATEMENT
     fn statement(&mut self) -> Result<Statement, String> {
         let token = self.peek();
 
         match token.kind {
             TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
             TokenType::Function => self.function_declaration(),
+            TokenType::Return => self.return_statement(),
             _ => self.expression_statement(),
         }
     }
@@ -84,7 +85,7 @@ impl Parser {
         })
     }
 
-    // EXPRESSION_STATEMENT -> EXPRESSION TokenType::Semicolon
+    // EXPRESSION_STATEMENT -> COMPARISON TokenType::Semicolon
     fn expression_statement(&mut self) -> Result<Statement, String> {
         let expr = self.comparison()?;
         self.consume_token_type(
@@ -108,7 +109,7 @@ impl Parser {
         self.consume_token_type(TokenType::RightParen, "expected ')' after function arguments")?;
         let mut body = self.function_body()?;
         if body.len() == 0 {
-            body = vec![ Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })}];
+            body = vec![ Statement::Return { expression: Box::new(Expression::Undefined)}];
         }
         
         Ok(Statement::FunctionDeclaration { 
@@ -116,6 +117,20 @@ impl Parser {
             params: Box::new(params),
             body: Box::new(body)
         })
+    }
+
+    fn return_statement(&mut self) -> Result<Statement, String> {
+        let _ = self.consume_token();
+
+        if self.peek().kind == TokenType::Semicolon {
+            let _ = self.consume_token();
+            return Ok(Statement::Return { expression: Box::new(Expression::Undefined) });
+        }
+        
+        let expr = self.comparison()?;
+        self.consume_token_type(TokenType::Semicolon, "expected ';' after return statement")?;
+        
+        Ok(Statement::Return { expression: Box::new(expr) })
     }
 
     // FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)?
@@ -154,7 +169,7 @@ impl Parser {
                 TokenType::Function => return Err(format!("line {}: Functions inside functions are not yet supported", self.peek().line)),
                 TokenType::Return => {
                     is_return_found = true;
-                    self.function_return()
+                    self.return_statement()
                 },
                 TokenType::KeywordLet | TokenType::KeywordConst => self.declaration(),
                 _ => self.expression_statement(),
@@ -163,25 +178,10 @@ impl Parser {
         }
 
         if !is_return_found {
-            statements.push(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
+            statements.push(Statement::Return { expression: Box::new(Expression::Undefined) });
         }
 
         Ok(statements)
-    }
-
-    // FUNCTION_RETURN -> TokenType::Return COMPARISON? TokenType::Semicolon
-    fn function_return(&mut self) -> Result<Statement, String> {
-        self.consume_token();
-
-        if self.peek().kind == TokenType::Semicolon {
-            self.consume_token();
-            return Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(Expression::Undefined) })});
-        }
-
-        let expr = self.comparison()?;
-        self.consume_token_type(TokenType::Semicolon, "expected ';' after return statement")?;
-
-        Ok(Statement::ExpressionStatement { expression: Box::new(Expression::Return { expression: Box::new(expr) }) })
     }
     
     // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*

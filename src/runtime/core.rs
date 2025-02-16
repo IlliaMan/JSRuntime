@@ -24,7 +24,7 @@ impl Runtime {
     fn evaluate_statement(&mut self, statement: Statement) -> Result<(), String> {
       match statement {
         Statement::Declaration { is_const, name, value} => {
-          let value = match &*value {
+          let value: RuntimeValue = match &*value {
             Some(expr) => self.evalutate_expression(expr)?,
             _ => RuntimeValue::Undefined,
           };
@@ -59,6 +59,7 @@ impl Runtime {
           println!("runtime>: created {:?}({:?})", function_name, params);
           self.environment.functions.insert(function_name, Statement::FunctionDeclaration { name, params, body });
         },
+        Statement::Return { .. } => return Err("return statements can't be used outside of functions".into()),
       }
 
       Ok(())
@@ -146,7 +147,7 @@ impl Runtime {
                 }
             },
             Expression::Call { callee, args } => self.call_function(&*callee, &*args),
-            Expression::Return { expression } => self.evalutate_expression(expression),
+            // Expression::Return { expression } => self.evalutate_expression(expression),
         }
     }
 
@@ -206,10 +207,8 @@ impl Runtime {
       let mut runtime = Runtime { environment: local_scope };
 
       for statement in body.iter() {
-        if let Statement::ExpressionStatement { expression } = statement {
-            if let Expression::Return { expression } = &**expression {
-                return runtime.evalutate_expression(expression);
-            }
+        if let Statement::Return { expression } = statement {
+            return runtime.evalutate_expression(expression);
         }
         
         if let Err(error) = runtime.evaluate_statement(statement.clone()) {
