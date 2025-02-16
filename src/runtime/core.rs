@@ -29,11 +29,6 @@ impl Runtime {
             _ => RuntimeValue::Undefined,
           };
 
-          let name = match &*name {
-            Expression::Identifier(name) => String::from(name),
-            _ => panic!("parser bug: name can only Expression::Identifier, got {:?}", name),
-          };
-
           if self.environment.variables.contains_key(&name) {
             return Err(format!("variable {} already declared", name));
           }

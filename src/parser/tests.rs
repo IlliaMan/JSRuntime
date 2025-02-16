@@ -138,7 +138,7 @@ fn test_valid_declaration_with_initializer() {
         result.unwrap(),
         vec![Statement::Declaration {
             is_const: false,
-            name: Box::new(Expression::Identifier("x".into())),
+            name: "x".into(),
             value: Box::new(Some(Expression::Number(5.0)))
         }]
     );
@@ -160,7 +160,7 @@ fn test_valid_declaration_without_initializer() {
         result.unwrap(),
         vec![Statement::Declaration {
             is_const: true,
-            name: Box::new(Expression::Identifier("x".into())),
+            name: "x".into(),
             value: Box::new(None)
         }]
     );

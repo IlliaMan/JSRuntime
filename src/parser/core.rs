@@ -58,6 +58,9 @@ impl Parser {
         };
 
         let name = self.identifier()?;
+        let name = Expression::extract_string(&name)
+            .ok_or_else(|| format!("Expected declaration name to be Expression::Identifier but got {:?}", name))?;
+
         let mut value = None;
 
         let token = self.consume_token();
@@ -76,11 +79,7 @@ impl Parser {
             }
         };
 
-        Ok(Statement::Declaration {
-            is_const,
-            name: Box::new(name),
-            value: Box::new(value),
-        })
+        Ok(Statement::Declaration { is_const, name, value: Box::new(value) })
     }
 
     fn expression_statement(&mut self) -> Result<Statement, String> {

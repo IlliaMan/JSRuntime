@@ -7,8 +7,7 @@ pub enum Statement {
   },
   Declaration {
     is_const: bool,
-    // TODO: Need a way to have sort of Expression::Identifier as type here
-    name: Box<Expression>,
+    name: String,
     value: Box<Option<Expression>>,
   },
   FunctionDeclaration {
