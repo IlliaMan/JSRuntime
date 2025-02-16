@@ -19,7 +19,6 @@ impl Parser {
         self.program()
     }
 
-    // PROGRAM -> STATEMENT* TokenType::Eof
     fn program(&mut self) -> Result<Vec<Statement>, String> {
         let mut statements = vec![];
 
@@ -34,7 +33,6 @@ impl Parser {
         Ok(statements)
     }
 
-    // STATEMENT -> DECLARATION | FUNCTION_DECLARATION | EXPRESSION_STATEMENT | RETURN_STATEMENT
     fn statement(&mut self) -> Result<Statement, String> {
         let token = self.peek();
 
@@ -85,7 +83,6 @@ impl Parser {
         })
     }
 
-    // EXPRESSION_STATEMENT -> COMPARISON TokenType::Semicolon
     fn expression_statement(&mut self) -> Result<Statement, String> {
         let expr = self.comparison()?;
         self.consume_token_type(
@@ -97,7 +94,6 @@ impl Parser {
         })
     }
 
-    // FUNCTION_DECLARATION ->  TokenType::Function IDENTIFIER TokenType::LeftParen FUNCTION_PARAMS? TokenType::RightParen FUNCTION_BODY
     fn function_declaration(&mut self) -> Result<Statement, String> {
         let _ = self.consume_token();
         let identifier = self.identifier()?;
@@ -133,7 +129,6 @@ impl Parser {
         Ok(Statement::Return { expression: Box::new(expr) })
     }
 
-    // FUNCTION_PARAMS -> IDENTIFIER (TokenType::Comma IDENTIFIER)?
     fn function_params(&mut self) -> Result<Vec<Expression>, String> {
         let mut params = vec![];
         params.push(self.identifier()?);
@@ -146,7 +141,6 @@ impl Parser {
         Ok(params)
     }
 
-    // FUNCTION_BODY -> TokenType::LeftSquareParen (FUNCTION_BODY_CONTENT)* TokenType::RightSquareParen
     fn function_body(&mut self) -> Result<Vec<Statement>, String> {
         self.consume_token_type(TokenType::LeftCurlyBrace, "Expected '{' to begin function body.")?;
 
@@ -160,7 +154,6 @@ impl Parser {
         Ok(statements)
     }
 
-    // FUNCTION_BODY_CONTENT -> DECLARATION | EXPRESSION_STATEMENT | FUNCTION_RETURN
     fn function_body_content(&mut self) -> Result<Vec<Statement>, String> {
         let mut statements = vec![];
         let mut is_return_found = false;
@@ -184,7 +177,6 @@ impl Parser {
         Ok(statements)
     }
     
-    // COMPARISON -> EXPRESSION (COMPARISON_OPERATOR EXPRESSION)*
     fn comparison(&mut self) -> Result<Expression, String> {
         let mut expr = self.expression()?;
 
@@ -205,7 +197,6 @@ impl Parser {
         Ok(expr)
     }
 
-    // EXPRESSION -> TERM ((TokenType::Plus | TokenType::Minus) TERM)*
     fn expression(&mut self) -> Result<Expression, String> {
         let mut expr = self.term()?;
 
@@ -226,7 +217,6 @@ impl Parser {
         Ok(expr)
     }
 
-    // TERM -> FACTOR ((TokenType::Star | TokenType::Division) FACTOR)*
     fn term(&mut self) -> Result<Expression, String> {
         let mut expr = self.factor()?;
 
@@ -246,7 +236,6 @@ impl Parser {
         Ok(expr)
     }
 
-    // FACTOR -> LITERAL | IDENTIFIER | UNARY | GROUPING | CALL 
     fn factor(&mut self) -> Result<Expression, String> {
         let token = self.peek();
 
@@ -271,7 +260,6 @@ impl Parser {
         }
     }
 
-    // CALL -> IDENTIFIER TokenType::LeftParen ARGUMENTS? TokenType::RightParen
     fn call(&mut self) -> Result<Expression, String> {
         let identifier: Expression = self.identifier()?;
         let identifier = Expression::extract_string(&identifier)
@@ -288,7 +276,6 @@ impl Parser {
         Ok(Expression::Call { callee: identifier, args: Box::new(args) })
     } 
     
-    // ARGUMENTS ->  COMPARISON (TokenType::Comma COMPARISON)*
     fn arguments(&mut self) -> Result<Vec<Expression>, String> {
         let mut args = vec![];
         args.push(self.comparison()?);
@@ -301,7 +288,6 @@ impl Parser {
         Ok(args)
     }
 
-    // LITERAL -> TokenType::Number
     fn literal(&mut self) -> Result<Expression, String> {
         let token = self.consume_token();
 
@@ -318,7 +304,6 @@ impl Parser {
         }
     }
 
-    // GROUPING -> TokenType::LeftParen EXPRESSION Token::RightParen
     fn grouping(&mut self) -> Result<Expression, String> {
         self.consume_token_type(TokenType::LeftParen, "expected '(' to start grouping")?;
         let expr = self.expression()?;
@@ -328,7 +313,6 @@ impl Parser {
         })
     }
 
-    // UNARY -> TokenType::Minus FACTOR
     fn unary(&mut self) -> Result<Expression, String> {
         let operator_token = self.consume_token();
         // workaround: cannot borrow `*self` as mutable more than once
@@ -347,7 +331,6 @@ impl Parser {
         }
     }
 
-    // IDENTIFIER -> TokenType::Identifier
     fn identifier(&mut self) -> Result<Expression, String> {
         let token = self.consume_token();
         match token.kind {
