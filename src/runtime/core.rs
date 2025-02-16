@@ -156,7 +156,7 @@ impl Runtime {
       for (key, value) in &self.environment.functions {
         local_scope.functions.insert(key.clone(), value.clone());
       }
-      self.bind_params(params, &evaluated_args, &mut local_scope)?;
+      self.bind_params(params, &evaluated_args, &mut local_scope);
       
       let result = self.execute_function_body(local_scope, body)?;
       println!("runtime>: function {:?} returned {:?}", callee, result);
@@ -175,18 +175,11 @@ impl Runtime {
         .collect()
     }
 
-    fn bind_params(&self, params: &Vec<Expression>, values: &Vec<RuntimeValue>, environment: &mut Environment) -> Result<(), String> {
+    fn bind_params(&self, params: &Vec<String>, values: &Vec<RuntimeValue>, environment: &mut Environment) {
       for (i, param) in params.iter().enumerate() {
-        let param_name = match param {
-            Expression::Identifier(param) => String::from(param),
-            _ => return Err(String::from("param must be Identifier")),
-        };
-
         let value = values.get(i).cloned().unwrap_or(RuntimeValue::Undefined);
-        environment.variables.insert(param_name, value);
+        environment.variables.insert(param.clone(), value);
       }
-
-      Ok(())
     } 
 
     fn execute_function_body(&self, local_scope: Environment, body: &Vec<Statement>) -> Result<RuntimeValue, String> {

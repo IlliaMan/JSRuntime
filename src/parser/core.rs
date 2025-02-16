@@ -104,13 +104,14 @@ impl Parser {
         if self.peek().kind != TokenType::RightParen {
             params = self.function_params()?;
         }
+
         self.consume_token_type(TokenType::RightParen, "expected ')' after function arguments")?;
         let mut body = self.function_body()?;
         if body.len() == 0 {
             body = vec![ Statement::Return { expression: Box::new(Expression::Undefined)}];
         }
         
-        Ok(Statement::FunctionDeclaration { name, params: Box::new(params), body: Box::new(body) })
+        Ok(Statement::FunctionDeclaration { name, params, body: Box::new(body) })
     }
 
     fn return_statement(&mut self) -> Result<Statement, String> {
@@ -127,13 +128,22 @@ impl Parser {
         Ok(Statement::Return { expression: Box::new(expr) })
     }
 
-    fn function_params(&mut self) -> Result<Vec<Expression>, String> {
+    fn function_params(&mut self) -> Result<Vec<String>, String> {
         let mut params = vec![];
-        params.push(self.identifier()?);
+
+        let param = self.identifier()?;
+        let param: String = Expression::extract_string(&param)
+            .ok_or_else(|| format!("Expected function parameter to be Expression::Identifier but got {:?}", param))?;
+
+        params.push(param);
         
         while self.peek().kind == TokenType::Comma {
             self.consume_token();
-            params.push(self.identifier()?);
+            let param = self.identifier()?;
+            let param: String = Expression::extract_string(&param)
+                .ok_or_else(|| format!("Expected function parameter to be Expression::Identifier but got {:?}", param))?;
+
+            params.push(param);
         }
 
         Ok(params)
