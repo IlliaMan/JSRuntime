@@ -422,7 +422,7 @@ fn test_function_declaration_no_params() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), vec![
         Statement::FunctionDeclaration {
-            name: Box::new(Expression::Identifier("hello".into())),
+            name: "hello".into(),
             params: Box::new(vec![]),
             body: Box::new(vec![
                 Statement::Return  {
@@ -451,7 +451,7 @@ fn test_function_declaration_empty_body() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), vec![
         Statement::FunctionDeclaration {
-            name: Box::new(Expression::Identifier("hello".into())),
+            name: "hello".into(),
             params: Box::new(vec![]),
             body: Box::new(vec![
                 Statement::Return { 
@@ -482,7 +482,7 @@ fn test_function_declaration_with_return_nothing() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), vec![
         Statement::FunctionDeclaration {
-            name: Box::new(Expression::Identifier("hello".into())),
+            name: "hello".into(),
             params: Box::new(vec![]),
             body: Box::new(vec![
                 Statement::Return { expression: Box::new(Expression::Undefined) }
@@ -517,7 +517,7 @@ fn test_function_declaration_with_params() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), vec![
         Statement::FunctionDeclaration {
-            name: Box::new(Expression::Identifier("add".into())),
+            name: "add".into(),
             params: Box::new(vec![Expression::Identifier("x".into()), Expression::Identifier("y".into())]),
             body: Box::new(vec![
                 Statement::Return { 

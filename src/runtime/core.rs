@@ -46,13 +46,9 @@ impl Runtime {
           println!("runtime>: {:?}", value);
         },
         Statement::FunctionDeclaration { name, params, body } => {
-          let function_name = match &*name {
-            Expression::Identifier(name) => String::from(name),
-            _ => panic!("parser bug: function name can only Expression::Identifier, got {:?}", name),
-          };
+          println!("runtime>: created {:?}({:?})", name, params);
 
-          println!("runtime>: created {:?}({:?})", function_name, params);
-          self.environment.functions.insert(function_name, Statement::FunctionDeclaration { name, params, body });
+          self.environment.functions.insert(name.clone(), Statement::FunctionDeclaration { name, params, body });
         },
         Statement::Return { .. } => return Err("return statements can't be used outside of functions".into()),
       }

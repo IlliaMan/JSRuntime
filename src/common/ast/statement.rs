@@ -11,8 +11,7 @@ pub enum Statement {
     value: Box<Option<Expression>>,
   },
   FunctionDeclaration {
-    // TODO: Need a way to have sort of Expression::Identifier as type here
-    name: Box<Expression>,
+    name: String,
     // TODO: Need a way to have sort of Expression::Identifier as type here
     params: Box<Vec<Expression>>,
     body: Box<Vec<Statement>>,

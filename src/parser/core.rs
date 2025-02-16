@@ -96,6 +96,9 @@ impl Parser {
     fn function_declaration(&mut self) -> Result<Statement, String> {
         let _ = self.consume_token();
         let identifier = self.identifier()?;
+        let name = Expression::extract_string(&identifier)
+            .ok_or_else(|| format!("Expected declaration name to be Expression::Identifier but got {:?}", identifier))?;
+        
         self.consume_token_type(TokenType::LeftParen, "expected '(' after function name")?;
         let mut params = vec![];
         if self.peek().kind != TokenType::RightParen {
@@ -107,11 +110,7 @@ impl Parser {
             body = vec![ Statement::Return { expression: Box::new(Expression::Undefined)}];
         }
         
-        Ok(Statement::FunctionDeclaration { 
-            name: Box::new(identifier),
-            params: Box::new(params),
-            body: Box::new(body)
-        })
+        Ok(Statement::FunctionDeclaration { name, params: Box::new(params), body: Box::new(body) })
     }
 
     fn return_statement(&mut self) -> Result<Statement, String> {
