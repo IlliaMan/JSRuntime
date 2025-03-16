@@ -11,14 +11,14 @@ fn test_general_cases() {
     assert_eq!(
         get_token_types("1 + 5 * (1 + 9);"),
         vec![
-            TokenType::Number(1.0 as f64),
+            TokenType::Literal(Literal::Number(1.0 as f64)),
             TokenType::Plus,
-            TokenType::Number(5.0 as f64),
+            TokenType::Literal(Literal::Number(5.0 as f64)),
             TokenType::Star,
             TokenType::LeftParen,
-            TokenType::Number(1.0 as f64),
+            TokenType::Literal(Literal::Number(1.0 as f64)),
             TokenType::Plus,
-            TokenType::Number(9.0 as f64),
+            TokenType::Literal(Literal::Number(9.0 as f64)),
             TokenType::RightParen,
             TokenType::Semicolon,
             TokenType::Eof
@@ -67,12 +67,12 @@ fn test_number_literals() {
     assert_eq!(
         get_token_types("123 12.3 0 0.0 .123 123."),
         vec![
-            TokenType::Number(123 as f64),
-            TokenType::Number(12.3 as f64),
-            TokenType::Number(0 as f64),
-            TokenType::Number(0.0 as f64),
-            TokenType::Number(0.123 as f64),
-            TokenType::Number(123 as f64),
+            TokenType::Literal(Literal::Number(123 as f64)),
+            TokenType::Literal(Literal::Number(12.3 as f64)),
+            TokenType::Literal(Literal::Number(0 as f64)),
+            TokenType::Literal(Literal::Number(0.0 as f64)),
+            TokenType::Literal(Literal::Number(0.123 as f64)),
+            TokenType::Literal(Literal::Number(123 as f64)),
             TokenType::Eof
         ]
     );
@@ -83,14 +83,14 @@ fn test_literals() {
     assert_eq!(
         get_token_types(r#"123 false 'hello' true null undefined "hello" `hello`"#),
         vec![
-            TokenType::Number(123 as f64),
-            TokenType::Boolean(false),
-            TokenType::String("hello".into()),
-            TokenType::Boolean(true),
-            TokenType::Null,
-            TokenType::Undefined,
-            TokenType::String("hello".into()),
-            TokenType::String("hello".into()),
+            TokenType::Literal(Literal::Number(123 as f64)),
+            TokenType::Literal(Literal::Boolean(false)),
+            TokenType::Literal(Literal::String("hello".into())),
+            TokenType::Literal(Literal::Boolean(true)),
+            TokenType::Literal(Literal::Null),
+            TokenType::Literal(Literal::Undefined),
+            TokenType::Literal(Literal::String("hello".into())),
+            TokenType::Literal(Literal::String("hello".into())),
             TokenType::Eof
         ]
     );
@@ -119,7 +119,7 @@ fn test_line_comment() {
             TokenType::KeywordLet,
             TokenType::Identifier("x".into()),
             TokenType::Assign,
-            TokenType::Number(10.0),
+            TokenType::Literal(Literal::Number(10.0)),
             TokenType::Semicolon,
             TokenType::Eof,
         ]
@@ -134,7 +134,7 @@ fn test_block_comment() {
             TokenType::KeywordLet,
             TokenType::Identifier("x".into()),
             TokenType::Assign,
-            TokenType::Number(10.0),
+            TokenType::Literal(Literal::Number(10.0)),
             TokenType::Semicolon,
             TokenType::Eof,
         ]
@@ -149,7 +149,7 @@ fn test_nested_block_comment() {
             TokenType::KeywordLet,
             TokenType::Identifier("x".into()),
             TokenType::Assign,
-            TokenType::Number(10.0),
+            TokenType::Literal(Literal::Number(10.0)),
             TokenType::Semicolon,
             TokenType::Eof,
         ]
@@ -164,7 +164,7 @@ fn test_multi_line_nested_block_comment() {
             TokenType::KeywordLet,
             TokenType::Identifier("x".into()),
             TokenType::Assign,
-            TokenType::Number(10.0),
+            TokenType::Literal(Literal::Number(10.0)),
             TokenType::Semicolon,
             TokenType::Eof,
         ]
@@ -235,7 +235,7 @@ fn test_function_declarations() {
             TokenType::LeftCurlyBrace,
             TokenType::Identifier("x".into()),
             TokenType::Plus,
-            TokenType::Number(1.0),
+            TokenType::Literal(Literal::Number(1.0)),
             TokenType::Semicolon,
             TokenType::RightCurlyBrace,
             TokenType::Eof,
@@ -275,9 +275,9 @@ fn test_function_calls() {
         vec![
             TokenType::Identifier("assert".into()),
             TokenType::LeftParen,
-            TokenType::Boolean(true),
+            TokenType::Literal(Literal::Boolean(true)),
             TokenType::Comma,
-            TokenType::String("hello".into()),
+            TokenType::Literal(Literal::String("hello".into())),
             TokenType::RightParen,
             TokenType::Semicolon,
             TokenType::Eof,

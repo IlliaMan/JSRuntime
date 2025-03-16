@@ -1,3 +1,5 @@
+use super::literal::Literal;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     LeftParen,  // (
@@ -21,12 +23,7 @@ pub enum TokenType {
     GreaterThanOrEqual,
     LessThanOrEqual,
 
-    // Literals
-    Number(f64),
-    String(String),
-    Boolean(bool),
-    Null,
-    Undefined,
+    Literal(Literal),
 
     // Binding Keywords
     KeywordLet,
@@ -86,10 +83,10 @@ impl From<&[char]> for TokenType {
         match value.as_str() {
             "let" => Self::KeywordLet,
             "const" => Self::KeywordConst,
-            "true" => Self::Boolean(true),
-            "false" => Self::Boolean(false),
-            "null" => Self::Null,
-            "undefined" => Self::Undefined,
+            "true" => Self::Literal(Literal::Boolean(true)),
+            "false" => Self::Literal(Literal::Boolean(false)),
+            "null" => Self::Literal(Literal::Null),
+            "undefined" => Self::Literal(Literal::Undefined),
             "function" => Self::Function,
             "return" => Self::Return,
             "==" => Self::Equal,

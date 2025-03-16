@@ -1,12 +1,8 @@
-use crate::common::TokenType;
+use crate::common::{TokenType, Literal};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
-    Number(f64),
-    String(String),
-    Boolean(bool),
-    Null,
-    Undefined,
+    Literal(Literal),
     Identifier(String),
     Grouping {
         expression: Box<Expression>,
@@ -34,7 +30,12 @@ pub enum Expression {
 impl Expression {
     pub fn extract_string(expr: &Self) -> Option<String> {
         match expr {
-            Self::String(value) => Some(String::from(value)),
+            Self::Literal(literal) => {
+                match literal {
+                    Literal::String(value) => Some(String::from(value)),
+                    _ => None,
+                }
+            },
             Self::Identifier(value) => Some(String::from(value)),
             _ => None,
         }

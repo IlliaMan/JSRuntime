@@ -1,5 +1,5 @@
 use crate::common::ast::*;
-use crate::common::{Token, TokenType};
+use crate::common::{Token, TokenType, Literal};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -108,7 +108,7 @@ impl Parser {
         self.consume_token_type(TokenType::RightParen, "expected ')' after function arguments")?;
         let mut body = self.function_body()?;
         if body.len() == 0 {
-            body = vec![ Statement::Return { expression: Box::new(Expression::Undefined)}];
+            body = vec![ Statement::Return { expression: Box::new(Expression::Literal(Literal::Undefined))}];
         }
         
         Ok(Statement::FunctionDeclaration { name, params, body: Box::new(body) })
@@ -119,7 +119,7 @@ impl Parser {
 
         if self.peek().kind == TokenType::Semicolon {
             let _ = self.consume_token();
-            return Ok(Statement::Return { expression: Box::new(Expression::Undefined) });
+            return Ok(Statement::Return { expression: Box::new(Expression::Literal(Literal::Undefined)) });
         }
         
         let expr = self.comparison()?;
@@ -179,7 +179,7 @@ impl Parser {
         }
 
         if !is_return_found {
-            statements.push(Statement::Return { expression: Box::new(Expression::Undefined) });
+            statements.push(Statement::Return { expression: Box::new(Expression::Literal(Literal::Undefined)) });
         }
 
         Ok(statements)
@@ -248,11 +248,7 @@ impl Parser {
         let token = self.peek();
 
         match token.kind {
-            TokenType::Number(_)
-            | TokenType::String(_)
-            | TokenType::Boolean(_)
-            | TokenType::Null
-            | TokenType::Undefined => self.literal(),
+            TokenType::Literal(_) => self.literal(),
             TokenType::LeftParen => self.grouping(),
             TokenType::Minus => self.unary(),
             TokenType::Identifier(_) => {
@@ -300,15 +296,8 @@ impl Parser {
         let token = self.consume_token();
 
         match &token.kind {
-            TokenType::Number(value) => Ok(Expression::Number(*value)),
-            TokenType::String(value) => Ok(Expression::String(String::from(value))),
-            TokenType::Boolean(value) => Ok(Expression::Boolean(*value)),
-            TokenType::Null => Ok(Expression::Null),
-            TokenType::Undefined => Ok(Expression::Undefined),
-            _ => Err(format!(
-                "line {}: Expected number literal but got {:?}",
-                token.line, token.kind
-            )),
+            TokenType::Literal(literal) => Ok(Expression::Literal(literal.clone())),
+            _ => Err(format!("line {}: Expected number literal but got {:?}", token.line, token.kind)),
         }
     }
 
