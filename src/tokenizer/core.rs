@@ -1,6 +1,6 @@
-use super::token::{Token, TokenType};
+use crate::common::*;
 
-pub struct Scanner {
+pub struct Tokenizer {
     source: Vec<char>,
     position: usize,
 }
@@ -10,11 +10,11 @@ enum CommentType {
     Block,
 }
 
-impl Scanner {
+impl Tokenizer {
     pub fn new(source: String) -> Self {
         println!("--- Source Provided ---\n{}", source);
         println!("-----------------------\n");
-        Scanner {
+        Self {
             source: source.chars().collect(),
             position: 0,
         }
@@ -141,7 +141,7 @@ impl Scanner {
             panic!("string {} has no closing quote {}", string, quote);
         }
 
-        let token_type = TokenType::String(String::from(string));
+        let token_type = TokenType::Literal(Literal::String(String::from(string)));
         self.increment_position();
 
         Token::new(token_type, self.position /* TODO: should be line */)
@@ -166,17 +166,17 @@ impl Scanner {
 
         let token_type;
         if num_str.ends_with('.') {
-            token_type = TokenType::Number(
+            token_type = TokenType::Literal(Literal::Number(
                 num_str[..num_str.len() - 1]
                     .parse()
                     .expect("number ending with . should be parsed"),
-            );
+            ));
         } else {
-            token_type = TokenType::Number(
+            token_type = TokenType::Literal(Literal::Number(
                 num_str
                     .parse()
                     .expect("consume_number: can't parse a number"),
-            );
+            ));
         }
 
         Token::new(token_type, self.position /* TODO: should be line */)

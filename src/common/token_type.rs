@@ -1,28 +1,11 @@
-use std::fmt;
-
-pub struct Token {
-    pub kind: TokenType,
-    pub line: usize,
-}
-
-impl Token {
-    pub fn new(kind: TokenType, line: usize) -> Self {
-        Self { kind, line }
-    }
-}
-
-impl fmt::Debug for Token {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Token {{ kind: {:?}, line: {:?}}}", self.kind, self.line)
-    }
-}
+use super::literal::Literal;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     LeftParen,  // (
     RightParen, // )
-    LeftSquareParen, // [
-    RightSquareParen, // ]
+    LeftCurlyBrace, // {
+    RightCurlyBrace, // }
     Plus,
     Minus,
     Star,
@@ -40,12 +23,7 @@ pub enum TokenType {
     GreaterThanOrEqual,
     LessThanOrEqual,
 
-    // Literals
-    Number(f64),
-    String(String),
-    Boolean(bool),
-    Null,
-    Undefined,
+    Literal(Literal),
 
     // Binding Keywords
     KeywordLet,
@@ -88,8 +66,8 @@ impl From<char> for TokenType {
             ';' => Self::Semicolon,
             '>' => Self::GreaterThan,
             '<' => Self::LessThan,
-            '{' => Self::LeftSquareParen,
-            '}' => Self::RightSquareParen,
+            '{' => Self::LeftCurlyBrace,
+            '}' => Self::RightCurlyBrace,
             ',' => Self::Comma,
             _ => Self::Unsupported(String::from(value))
         }
@@ -105,10 +83,10 @@ impl From<&[char]> for TokenType {
         match value.as_str() {
             "let" => Self::KeywordLet,
             "const" => Self::KeywordConst,
-            "true" => Self::Boolean(true),
-            "false" => Self::Boolean(false),
-            "null" => Self::Null,
-            "undefined" => Self::Undefined,
+            "true" => Self::Literal(Literal::Boolean(true)),
+            "false" => Self::Literal(Literal::Boolean(false)),
+            "null" => Self::Literal(Literal::Null),
+            "undefined" => Self::Literal(Literal::Undefined),
             "function" => Self::Function,
             "return" => Self::Return,
             "==" => Self::Equal,
